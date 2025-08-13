@@ -12,7 +12,7 @@
 // }
 
 
-import React, { useState } from "react";
+import { useState } from "react";
 import StatusBar from "./ components/StatusBar";
 
 function App() {
