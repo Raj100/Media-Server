@@ -9,7 +9,7 @@ export default function DownloadForm() {
     if (!url.trim()) return;
     setLoading(true);
     try {
-      await axios.post("http://YOUR_SERVER_IP:5000/api/download", { url });
+      await axios.post("http://localhost:5000/api/download", { url });
       setUrl("");
     } catch (err) {
       console.error(err);
