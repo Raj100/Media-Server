@@ -83,7 +83,7 @@
               <button
                 v-for="status in ['all', 'downloading', 'completed', 'failed']"
                 :key="status"
-                @click="activeTab = status"
+                @click="activeTab =  status as DownloadStatus | 'all'"
                 :class="{
                   'px-3 py-1 text-sm rounded-lg transition-colors': true,
                   'bg-purple-100 text-purple-700 dark:bg-purple-900/20 dark:text-purple-400': activeTab === status,
