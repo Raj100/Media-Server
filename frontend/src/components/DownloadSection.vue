@@ -24,7 +24,7 @@ defineEmits(["update:modelValue"]);
       type="text"
       :placeholder="placeholder"
       :value="modelValue"
-      @input="$emit('update:modelValue', $event.target.value)"
+      @input="$emit('update:modelValue', ($event.target as HTMLInputElement).value)"
       class="border p-3 rounded w-full focus:ring-2"
       :class="color === 'blue' ? 'focus:ring-blue-400' : 'focus:ring-green-400'"
     />

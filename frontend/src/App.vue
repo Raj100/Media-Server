@@ -1,40 +1,26 @@
 <template>
-  <div id="app" :class="{ 'dark': isDarkMode }">
+  <div id="app" :class="{ dark: isDark }">
     <router-view />
   </div>
 </template>
 
-<script setup>
-import { computed } from 'vue'
-import { useThemeStore } from './stores/theme'
+<script setup lang="ts">
+import { onMounted } from "vue"
+import { useAuthStore } from "@/stores/auth"
+import { useThemeStore } from "@/stores/theme"
 
+const authStore = useAuthStore()
 const themeStore = useThemeStore()
-const isDarkMode = computed(() => themeStore.isDarkMode)
+
+const { isDark } = themeStore
+
+onMounted(() => {
+  // Initialize authentication and theme
+  authStore.initializeAuth()
+  themeStore.initializeTheme()
+})
 </script>
 
-<style>
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap');
-
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
-body {
-  font-family: 'DM Sans', sans-serif;
-  transition: background-color 0.3s ease, color 0.3s ease;
-}
-
-#app {
-  min-height: 100vh;
-  background-color: #faf5ff;
-  color: #374151;
-  transition: all 0.3s ease;
-}
-
-#app.dark {
-  background-color: #1a1a1a;
-  color: #ffffff;
-}
-</style>
+<!-- <style>
+@import "./assets/style.css";
+</style> -->

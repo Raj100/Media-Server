@@ -1,10 +1,7 @@
-<script setup lang="tsx">
+<!-- <script setup lang="tsx">
 import { motion, useScroll } from 'motion-v'
 import { defineComponent, ref } from 'vue'
 
-/**
- * ==============   Styles   ================
- */
 
 const itemContainer = {
   height: '100vh',
@@ -115,4 +112,4 @@ const Item = defineComponent({
   <div>
     <Item v-for="i in 3" :key="i" />
   </div>
-</template>
+</template> -->
