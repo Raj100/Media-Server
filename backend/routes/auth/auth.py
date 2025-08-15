@@ -3,12 +3,8 @@ from pydantic import BaseModel, EmailStr,Field
 from sqlalchemy.orm import Session
 from datetime import timedelta
 import traceback
-# from Authentication.schemas.auth import (
-#     # AdminRegisterRequest,
-#     UserLoginRequest,
-#     TokenResponse,
-#     UserResponse,
-# )
+from datetime import datetime
+from typing import Optional, Literal
 from models.user import AdminUser
 from config.database import get_db
 from utils.authentication import jwt, password as pwd
@@ -25,10 +21,17 @@ class AdminLoginRequest(BaseModel):
     email: str
     password: str
 
+class PublicUser(BaseModel):
+    name: str
+    email: str
+    role: Literal["admin", ""]
+    mfa_enabled: bool
+    createdAt: datetime
 
 class AdminTokenResponse(BaseModel):
+    success: bool
+    user: PublicUser
     token: str
-    email: str
 
 class ResetPasswordRequest(BaseModel):
     token: str
@@ -42,8 +45,16 @@ def admin_login(request: AdminLoginRequest, db: Session = Depends(get_db)):
     if not admin or not pwd.verify_password(request.password, admin.password):
         print(f"Failed login attempt for admin: {request.email}")
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials"
+            status_code=status.HTTP_401_UNAUTHORIZED, error="Invalid credentials" ,detail="Invalid credentials"
         )
-    token_data = {"sub": str(admin.id), "role": "PGN_ADMIN"}
+    token_data = {"sub": str(admin.id), "role": "ADMIN"}
     token = jwt.create_access_token(data=token_data)
-    return AdminTokenResponse(token=token, email=admin.email)
+    
+    user_data = PublicUser(
+        name=admin.name,
+        email=admin.email,
+        role="",
+        mfa_enabled=admin.mfa_enabled,
+        createdAt=admin.created_at
+    )
+    return AdminTokenResponse(success=True,user=user_data,token=token)

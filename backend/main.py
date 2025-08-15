@@ -7,6 +7,8 @@ from routes.downloads import  router as downloads_router
 from routes.auth.auth import router as auth_router
 from routes.websocket import router as websocket_endpoint
 from routes.stream import router as stream_router
+from routes.media import router as media_router
+from routes.server import router as server_router
 from config.database import Base, engine
 from contextlib import asynccontextmanager
 from dotenv import load_dotenv
@@ -68,8 +70,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(auth_router, prefix="/api/auth", tags=["Authentication"])
+app.include_router(auth_router, prefix="/auth", tags=["Authentication"])
 app.include_router(downloads_router, prefix="/download", tags=["Download"])
 app.include_router(stream_router, tags=["Stream"])
 app.include_router(websocket_endpoint, tags=["WebSocket"])
+app.include_router(media_router,prefix="/media", tags=["Media"])
+app.include_router(server_router, tags=["Server"])
+
 
