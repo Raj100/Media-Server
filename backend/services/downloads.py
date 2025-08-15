@@ -3,23 +3,21 @@ import os
 import json
 import subprocess
 from typing import Dict, Any, Set
-from .utils import MEDIA_DIR, ensure_media_dir, filename_from_url, sanitize_filename
+from utils.file import MEDIA_DIR, ensure_media_dir, filename_from_url, sanitize_filename
 import httpx
 import aiofiles
 
 ensure_media_dir()
 
-# in-memory task registry
 TASKS: Dict[str, Dict[str, Any]] = {}
-WS_CONNECTIONS: Set[Any] = set()  # set of WebSocket objects
+WS_CONNECTIONS: Set[Any] = set()  # Trying: set of WebSocket objects
 
 def broadcast_tasks():
     """Send current TASKS snapshot to all connected websockets (async)."""
     data = json.dumps({"type":"tasks_snapshot","tasks":TASKS})
-    # schedule sends asynchronously — WS send is awaited in main to avoid import of starlette's ws here
+    # Trying : schedule sends asynchronously — WS send is awaited in main to avoid import of starlette's ws here
     for ws in list(WS_CONNECTIONS):
         try:
-            # ws is starlette.websockets.WebSocket; use .send_text in main
             asyncio.create_task(ws.send_text(data))
         except Exception:
             try:
@@ -36,12 +34,12 @@ async def download_from_http(url: str, task_id: str):
     broadcast_tasks()
 
     async with httpx.AsyncClient(timeout=None) as client:
-        resp = await client.stream("GET", url)
-        # get content-length if present
-        total = int(resp.headers.get("content-length") or 0)
-        downloaded = 0
-        TASKS[task_id]["status"] = "downloading"
-        broadcast_tasks()
+        async with client.stream("GET", url) as resp:
+        # Fix: get content-length if present
+            total = int(resp.headers.get("content-length") or 0)
+            downloaded = 0
+            TASKS[task_id]["status"] = "downloading"
+            broadcast_tasks()
 
         async with aiofiles.open(dest, "wb") as f:
             async for chunk in resp.aiter_bytes(1024 * 1024):  # 1 MB chunks
@@ -93,7 +91,7 @@ async def download_from_yt_dlp(link: str, task_id: str):
             except:
                 pass
             broadcast_tasks()
-        # If we can detect output file name from text:
+        # If can detect output file name from text:
         m2 = re.search(r"Destination: (.+)", text)
         if m2:
             filename_set = os.path.basename(m2.group(1).strip())

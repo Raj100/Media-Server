@@ -3,12 +3,13 @@ import re
 from pathlib import Path
 from urllib.parse import urlparse
 
-MEDIA_DIR = os.getenv("MEDIA_DIR", "/media/data")
+MEDIA_DIR = os.getenv("MEDIA_DIR", "./media/data")  # Prod:differnt on mounted on server
 
 def ensure_media_dir():
     Path(MEDIA_DIR).mkdir(parents=True, exist_ok=True)
 
 def sanitize_filename(name: str) -> str:
+    # basic sanitize
     name = re.sub(r"[^\w\-.() ]+", "_", name)
     return name
 
