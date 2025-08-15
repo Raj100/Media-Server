@@ -24,26 +24,40 @@ class EmailService:
             autoescape=True
         )
     def send_email(self, to_email: EmailStr, subject: str, body: str, is_html: bool = False, context:str = "" ) -> bool:
+        print("starting line 1")
         msg = MIMEMultipart()
         msg['From'] = self.smtp_email
         msg['To'] = to_email
         msg['Subject'] = subject
-        
+        print("starting line 2")
+
         # Attach body
         if is_html:
+            print("starting line 2.1")    
             template = self.template_env.get_template(body)
             html_content = template.render(context)
             msg.attach(MIMEText(html_content, 'html'))
         else:
             msg.attach(MIMEText(body, 'plain'))
-        
+        print("starting line 3")       
         try:
-            with smtplib.SMTP(self.smtp_server, self.smtp_port) as server:
-                server.starttls()
-
-                server.login(self.smtp_email, self.smtp_password)
-                server.send_message(msg)
-            
+            if self.smtp_port == 465:
+                print("starting line 4")       
+                with smtplib.SMTP_SSL(self.smtp_server, self.smtp_port) as server:
+                    print("starting line 5")  
+                    server.login(self.smtp_email, self.smtp_password)
+                    print("starting line 6")  
+                    server.send_message(msg)
+                    print("starting line 7") 
+            else:
+                with smtplib.SMTP(self.smtp_server, self.smtp_port) as server:
+                    print("starting line 4")       
+                    server.starttls()
+                    print("starting line 5")  
+                    server.login(self.smtp_email, self.smtp_password)
+                    print("starting line 6")  
+                    server.send_message(msg)
+                    print("starting line 7")  
             return True
         except Exception as e:
             print(f"Email sending failed: {e}")

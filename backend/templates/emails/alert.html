@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Media Server Alert</title>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background-color: #ffdddd; padding: 20px; text-align: center; color: #a00; }
+        .content { padding: 30px; background-color: #fff; }
+        .issue { background: #ffeeee; padding: 10px; margin-bottom: 10px; border-left: 4px solid #a00; }
+        .footer { margin-top: 30px; text-align: center; font-size: 0.8em; color: #6c757d; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>⚠ Server Alert</h1>
+            <p>Critical issues detected on Media server</p>
+        </div>
+
+        <div class="content">
+            <h2>Detected Issues</h2>
+            {% for issue in issues %}
+            <div class="issue">{{ issue }}</div>
+            {% endfor %}
+
+            <h2>Current Status</h2>
+            <p><strong>Server Status:</strong> {{ server_status }}</p>
+            <p><strong>Uptime:</strong> {{ uptime }}</p>
+            <p><strong>CPU Usage:</strong> {{ cpu_usage }}%</p>
+            <p><strong>Memory Usage:</strong> {{ memory_usage }}%</p>
+            <p><strong>Disk Usage:</strong> {{ disk_usage }}%</p>
+
+            <h2>Network</h2>
+            <p><strong>Download Speed:</strong> {{ network_speed.downloadSpeed }}Mbps</p>
+            <p><strong>Upload Speed:</strong> {{ network_speed.uploadSpeed }} Mbps</p>
+
+            <p>Please take immediate action to resolve these issues.</p>
+        </div>
+
+        <div class="footer">
+            <p>© Raj - Media Server. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html>

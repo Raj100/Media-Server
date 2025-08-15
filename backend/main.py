@@ -17,6 +17,7 @@ from sqlalchemy.orm import Session
 from config.database import SessionLocal
 from models.user import AdminUser 
 from utils.authentication.password import hash_password  
+from tasks.scheduler import start_scheduler
 
 
 load_dotenv()
@@ -55,7 +56,7 @@ async def lifespan(app: FastAPI):
     finally:
         db.close()
 
-
+start_scheduler()  
 
 app = FastAPI(
     title="Media Server",

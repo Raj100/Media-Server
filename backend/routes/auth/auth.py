@@ -11,6 +11,7 @@ from utils.authentication import jwt, password as pwd
 from utils.authentication.jwt import create_reset_token, decode_reset_token
 from config.settings import settings
 from utils.smtp import EmailService
+from tasks.scheduler import check_and_store_server_health
 
 
 
@@ -38,7 +39,8 @@ class ResetPasswordRequest(BaseModel):
     new_password: str = Field(min_length=6)
 
 @router.post("/login", response_model=AdminTokenResponse)
-def admin_login(request: AdminLoginRequest, db: Session = Depends(get_db)):
+async def admin_login(request: AdminLoginRequest, db: Session = Depends(get_db)):
+    check_and_store_server_health()
     print("request",request)
     admin = db.query(AdminUser).filter(AdminUser.email == request.email).first()
     print("admin",admin)

@@ -12,6 +12,7 @@ class Settings(BaseSettings):
     MFA_ISSUER: str = "Media-App"
     ENV: str = "dev"
     APP_BASE_URL: str
+    ALERT_EMAIL_TO :str
 
     OAUTH2_SCHEME: ClassVar[OAuth2PasswordBearer] = OAuth2PasswordBearer(
         tokenUrl="/auth/login"
