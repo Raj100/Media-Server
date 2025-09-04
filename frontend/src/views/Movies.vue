@@ -1,34 +1,43 @@
 <template>
-  <div class="movies-page">
+  <div class="min-h-screen bg-gradient-to-br from-purple-50 to-purple-100 dark:from-gray-900 dark:to-purple-950">
     <Navbar />
-    
-    <div class="movies-container">
+
+    <div class="max-w-[1400px] mx-auto px-8 py-8 md:px-4">
       <!-- Header Section -->
-      <section class="movies-header">
-        <div class="header-content">
-          <h1 class="page-title">Movies & Shows</h1>
-          <p class="page-subtitle">Discover and enjoy your collection</p>
+      <section class="mb-8 text-center">
+        <div class="mb-8">
+          <h1 class="text-5xl md:text-3xl font-extrabold bg-gradient-to-br from-purple-900 to-purple-500 bg-clip-text text-transparent">
+            Movies & Shows
+          </h1>
+          <p class="text-lg text-gray-700 dark:text-gray-300 opacity-80">
+            Discover and enjoy your collection
+          </p>
         </div>
-        
+
         <!-- Search and Filters -->
-        <div class="search-filters">
-          <div class="search-box">
+        <div class="flex flex-wrap justify-center gap-4 items-center">
+          <div class="relative flex-1 max-w-sm">
             <input
               v-model="searchQuery"
               type="text"
               placeholder="Search movies..."
-              class="search-input"
+              class="w-full px-4 py-3 pr-12 border-2 border-gray-200 rounded-full text-gray-900 dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-200 transition"
             />
-            <button class="search-button">
-              <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                <circle cx="11" cy="11" r="8"/>
-                <path d="m21 21-4.35-4.35"/>
+            <button
+              class="absolute right-2 top-1/2 transform -translate-y-1/2 w-10 h-10 rounded-full bg-gradient-to-br from-purple-900 to-purple-500 flex items-center justify-center text-white hover:scale-110 transition"
+            >
+              <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <circle cx="11" cy="11" r="8" />
+                <path d="m21 21-4.35-4.35" />
               </svg>
             </button>
           </div>
-          
-          <div class="filter-controls">
-            <select v-model="selectedGenre" class="filter-select">
+
+          <div class="flex flex-wrap gap-4 items-center">
+            <select
+              v-model="selectedGenre"
+              class="px-4 py-3 border-2 border-gray-200 rounded-lg bg-white text-sm cursor-pointer focus:outline-none focus:border-purple-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white transition"
+            >
               <option value="">All Genres</option>
               <option value="Sci-Fi">Sci-Fi</option>
               <option value="Thriller">Thriller</option>
@@ -36,15 +45,21 @@
               <option value="Drama">Drama</option>
               <option value="Comedy">Comedy</option>
             </select>
-            
-            <select v-model="sortBy" class="filter-select">
+
+            <select
+              v-model="sortBy"
+              class="px-4 py-3 border-2 border-gray-200 rounded-lg bg-white text-sm cursor-pointer focus:outline-none focus:border-purple-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white transition"
+            >
               <option value="title">Sort by Title</option>
               <option value="year">Sort by Year</option>
               <option value="rating">Sort by Rating</option>
               <option value="duration">Sort by Duration</option>
             </select>
-            
-            <button @click="toggleView" class="view-toggle">
+
+            <button
+              @click="toggleView"
+              class="px-3 py-3 border-2 border-gray-200 rounded-lg bg-white dark:bg-gray-700 dark:border-gray-600 text-lg hover:scale-110 hover:border-purple-500 transition"
+            >
               <span v-if="viewMode === 'grid'">📋</span>
               <span v-else>⊞</span>
             </button>
@@ -53,97 +68,143 @@
       </section>
 
       <!-- Movies Grid/List -->
-      <section class="movies-content">
-        <div :class="['movies-grid', { 'list-view': viewMode === 'list' }]">
+      <section class="mt-8">
+        <div
+          :class="[
+            'grid gap-8',
+            viewMode === 'grid' ? 'grid-cols-[repeat(auto-fill,minmax(280px,1fr))]' : 'grid-cols-1 gap-4'
+          ]"
+        >
           <div
             v-for="movie in filteredAndSortedMovies"
             :key="movie.id"
-            :class="['movie-card', { 'list-card': viewMode === 'list' }]"
+            :class="[
+              'bg-white dark:bg-gray-800 rounded-2xl shadow-md hover:shadow-xl hover:-translate-y-1 transition cursor-pointer overflow-hidden',
+              viewMode === 'list' ? 'flex items-center p-4' : ''
+            ]"
             @click="selectMovie(movie)"
           >
-            <div class="movie-poster">
-              <img :src="movie.thumbnail" :alt="movie.title" />
-              <div class="movie-overlay">
-                <button @click.stop="playMovie(movie)" class="play-button">
-                  <svg viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M8 5v14l11-7z"/>
+            <div
+              class="relative overflow-hidden"
+              :class="viewMode === 'list' ? 'w-32 h-48 flex-shrink-0 rounded-lg mr-6' : ''"
+            >
+              <img
+                :src="movie.thumbnail"
+                :alt="movie.title"
+                class="w-full h-full object-cover transition-transform hover:scale-105"
+              />
+              <div
+                class="absolute inset-0 bg-black bg-opacity-70 flex items-center justify-center gap-4 opacity-0 hover:opacity-100 transition"
+              >
+                <button class="w-12 h-12 rounded-full bg-white flex items-center justify-center hover:scale-110 transition" @click.stop="playMovie(movie)">
+                  <svg viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6 text-purple-900">
+                    <path d="M8 5v14l11-7z" />
                   </svg>
                 </button>
-                <button @click.stop="toggleFavorite(movie)" class="favorite-button">
-                  <svg viewBox="0 0 24 24" :fill="movie.isFavorite ? 'currentColor' : 'none'" stroke="currentColor">
-                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                <button class="w-12 h-12 rounded-full bg-white flex items-center justify-center hover:scale-110 transition" @click.stop="toggleFavorite(movie)">
+                  <svg
+                    viewBox="0 0 24 24"
+                    :fill="movie.isFavorite ? 'currentColor' : 'none'"
+                    stroke="currentColor"
+                    class="w-6 h-6 text-purple-900"
+                  >
+                    <path
+                      d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"
+                    />
                   </svg>
                 </button>
               </div>
-              <div class="movie-rating">
-                <span>⭐ {{ movie.rating }}</span>
+              <div class="absolute top-3 right-3 bg-black bg-opacity-80 text-white px-2 py-1 rounded-full text-xs font-semibold">
+                ⭐ {{ movie.rating }}
               </div>
             </div>
-            
-            <div class="movie-info">
-              <h3 class="movie-title">{{ movie.title }}</h3>
-              <div class="movie-meta">
-                <span class="movie-genre">{{ movie.genre }}</span>
-                <span class="movie-year">{{ movie.year }}</span>
-                <span class="movie-duration">{{ movie.duration }}</span>
+
+            <div class="p-6 flex-1" v-if="viewMode === 'grid'">
+              <h3 class="text-purple-900 dark:text-purple-500 text-lg font-semibold mb-2">{{ movie.title }}</h3>
+              <div class="flex flex-wrap gap-2 text-sm opacity-80 mb-2">
+                <span>{{ movie.genre }}</span>
+                <span>{{ movie.year }}</span>
+                <span>{{ movie.duration }}</span>
               </div>
-              <p v-if="viewMode === 'list'" class="movie-description">
-                {{ movie.description }}
-              </p>
+              <p class="text-sm opacity-80" v-if="viewMode === 'list'">{{ movie.description }}</p>
+            </div>
+
+            <div class="flex-1" v-else>
+              <h3 class="text-purple-900 dark:text-purple-500 text-lg font-semibold mb-2">{{ movie.title }}</h3>
+              <div class="flex flex-wrap gap-2 text-sm opacity-80 mb-2">
+                <span>{{ movie.genre }}</span>
+                <span>{{ movie.year }}</span>
+                <span>{{ movie.duration }}</span>
+              </div>
+              <p class="text-sm opacity-80">{{ movie.description }}</p>
             </div>
           </div>
         </div>
-        
+
         <!-- Empty State -->
-        <div v-if="filteredAndSortedMovies.length === 0" class="empty-state">
-          <div class="empty-icon">🎬</div>
-          <h3>No movies found</h3>
-          <p>Try adjusting your search or filters</p>
+        <div v-if="filteredAndSortedMovies.length === 0" class="text-center py-16">
+          <div class="text-6xl mb-4">🎬</div>
+          <h3 class="text-purple-900 dark:text-purple-500 text-2xl font-semibold mb-2">No movies found</h3>
+          <p class="text-gray-600 dark:text-gray-300">Try adjusting your search or filters</p>
         </div>
       </section>
     </div>
 
     <!-- Movie Detail Modal -->
-    <div v-if="selectedMovie" class="modal-overlay" @click="closeModal">
-      <div class="movie-modal" @click.stop>
-        <button @click="closeModal" class="modal-close">×</button>
-        
-        <div class="modal-content">
-          <div class="modal-poster">
-            <img :src="selectedMovie.thumbnail" :alt="selectedMovie.title" />
+    <div v-if="selectedMovie" class="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 p-8" @click="closeModal">
+      <div class="bg-white dark:bg-gray-800 rounded-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto relative" @click.stop>
+        <button
+          class="absolute top-4 right-4 w-10 h-10 rounded-full bg-black bg-opacity-50 text-white text-2xl hover:bg-opacity-80 hover:scale-110 transition"
+          @click="closeModal"
+        >
+          ×
+        </button>
+
+        <div class="flex gap-8 p-8 md:flex-col md:p-4">
+          <div class="flex-shrink-0 w-72 md:w-full md:mx-auto">
+            <img :src="selectedMovie.thumbnail" :alt="selectedMovie.title" class="w-full rounded-lg" />
           </div>
-          
-          <div class="modal-info">
-            <h2>{{ selectedMovie.title }}</h2>
-            <div class="modal-meta">
-              <span class="rating">⭐ {{ selectedMovie.rating }}</span>
-              <span class="year">{{ selectedMovie.year }}</span>
-              <span class="duration">{{ selectedMovie.duration }}</span>
-              <span class="genre">{{ selectedMovie.genre }}</span>
+
+          <div class="flex-1">
+            <h2 class="text-3xl md:text-2xl font-extrabold mb-4 text-purple-900 dark:text-purple-500">
+              {{ selectedMovie.title }}
+            </h2>
+            <div class="flex flex-wrap gap-4 mb-6">
+              <span class="bg-purple-200 dark:bg-purple-900 px-4 py-2 rounded-full text-sm font-medium">⭐ {{ selectedMovie.rating }}</span>
+              <span class="bg-purple-200 dark:bg-purple-900 px-4 py-2 rounded-full text-sm font-medium">{{ selectedMovie.year }}</span>
+              <span class="bg-purple-200 dark:bg-purple-900 px-4 py-2 rounded-full text-sm font-medium">{{ selectedMovie.duration }}</span>
+              <span class="bg-purple-200 dark:bg-purple-900 px-4 py-2 rounded-full text-sm font-medium">{{ selectedMovie.genre }}</span>
             </div>
-            
-            <p class="modal-description">{{ selectedMovie.description }}</p>
-            
-            <div class="modal-actions">
-              <button @click="playMovie(selectedMovie)" class="modal-button primary">
-                <svg viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M8 5v14l11-7z"/>
+            <p class="text-lg mb-6 opacity-90">{{ selectedMovie.description }}</p>
+
+            <div class="flex flex-wrap gap-4 justify-start md:justify-center">
+              <button
+                @click="playMovie(selectedMovie)"
+                class="flex items-center gap-2 px-6 py-3 rounded-lg font-semibold bg-gradient-to-br from-purple-900 to-purple-500 text-white hover:-translate-y-1 hover:shadow-lg transition"
+              >
+                <svg viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5">
+                  <path d="M8 5v14l11-7z" />
                 </svg>
                 Play Now
               </button>
-              
-              <button @click="toggleFavorite(selectedMovie)" class="modal-button secondary">
-                <svg viewBox="0 0 24 24" :fill="selectedMovie.isFavorite ? 'currentColor' : 'none'" stroke="currentColor">
-                  <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+
+              <button
+                @click="toggleFavorite(selectedMovie)"
+                class="flex items-center gap-2 px-6 py-3 rounded-lg font-semibold bg-purple-100 dark:bg-purple-900 text-purple-900 dark:text-purple-500 border-2 border-purple-500 hover:-translate-y-1 hover:shadow-lg transition"
+              >
+                <svg viewBox="0 0 24 24" :fill="selectedMovie.isFavorite ? 'currentColor' : 'none'" stroke="currentColor" class="w-5 h-5">
+                  <path
+                    d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"
+                  />
                 </svg>
                 {{ selectedMovie.isFavorite ? 'Remove from Favorites' : 'Add to Favorites' }}
               </button>
-              
-              <button class="modal-button secondary">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                  <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/>
-                  <polyline points="16,6 12,2 8,6"/>
-                  <line x1="12" y1="2" x2="12" y2="15"/>
+
+              <button class="flex items-center gap-2 px-6 py-3 rounded-lg font-semibold bg-transparent border-2 border-purple-500 text-purple-900 dark:text-purple-500 hover:-translate-y-1 hover:shadow-lg transition">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" class="w-5 h-5">
+                  <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
+                  <polyline points="16,6 12,2 8,6" />
+                  <line x1="12" y1="2" x2="12" y2="15" />
                 </svg>
                 Download
               </button>
@@ -164,11 +225,12 @@
   </div>
 </template>
 
-<script setup>
+
+<script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
-import { useMediaStore } from '../stores/media'
+import { useMediaStore, Movie } from '../stores/media'
 import Navbar from '../components/Navbar.vue'
 import VideoPlayer from '../components/VideoPlayer.vue'
 
@@ -176,18 +238,30 @@ const router = useRouter()
 const authStore = useAuthStore()
 const mediaStore = useMediaStore()
 
-const searchQuery = ref('')
-const selectedGenre = ref('')
-const sortBy = ref('title')
-const viewMode = ref('grid')
-const selectedMovie = ref(null)
-const showVideoPlayer = ref(false)
-const currentMovie = ref(null)
+// Search & Filters
+const searchQuery = ref<string>('')
+const selectedGenre = ref<string>('')
+const sortBy = ref<'title' | 'year' | 'rating' | 'duration'>('title')
+const viewMode = ref<'grid' | 'list'>('grid')
 
-const filteredAndSortedMovies = computed(() => {
+// Selected Movie & Player
+const selectedMovie = ref<Movie | null>(null)
+const currentMovie = ref<Movie | null>(null)
+const showVideoPlayer = ref<boolean>(false)
+
+// Fetch movies from backend
+const fetchMovies = async () => {
+  try {
+    await mediaStore.fetchMovies() // Make sure your mediaStore has an async fetchMovies method
+  } catch (error) {
+    console.error('Error fetching movies:', error)
+  }
+}
+
+// Computed filtered & sorted movies
+const filteredAndSortedMovies = computed<Movie[]>(() => {
   let filtered = mediaStore.movies
 
-  // Filter by search query
   if (searchQuery.value) {
     filtered = filtered.filter(movie =>
       movie.title.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
@@ -196,31 +270,26 @@ const filteredAndSortedMovies = computed(() => {
     )
   }
 
-  // Filter by genre
   if (selectedGenre.value) {
     filtered = filtered.filter(movie => movie.genre === selectedGenre.value)
   }
 
-  // Sort
   return filtered.sort((a, b) => {
     switch (sortBy.value) {
-      case 'year':
-        return b.year - a.year
-      case 'rating':
-        return b.rating - a.rating
-      case 'duration':
-        return a.duration.localeCompare(b.duration)
-      default:
-        return a.title.localeCompare(b.title)
+      case 'year': return b.year - a.year
+      case 'rating': return b.rating - a.rating
+      case 'duration': return a.duration.localeCompare(b.duration)
+      default: return a.title.localeCompare(b.title)
     }
   })
 })
 
+// UI actions
 const toggleView = () => {
   viewMode.value = viewMode.value === 'grid' ? 'list' : 'grid'
 }
 
-const selectMovie = (movie) => {
+const selectMovie = (movie: Movie) => {
   selectedMovie.value = movie
 }
 
@@ -228,10 +297,10 @@ const closeModal = () => {
   selectedMovie.value = null
 }
 
-const playMovie = (movie) => {
+const playMovie = (movie: Movie) => {
   currentMovie.value = movie
   showVideoPlayer.value = true
-  mediaStore.playMedia(movie)
+  mediaStore.playMedia(movie) // optional backend tracking
   closeModal()
 }
 
@@ -240,17 +309,24 @@ const closeVideoPlayer = () => {
   currentMovie.value = null
 }
 
-const onVideoEnded = () => {
-  // Auto-play next movie or show recommendations
-  console.log('Video ended, showing recommendations...')
+const toggleFavorite = (movie: Movie) => {
+  mediaStore.toggleFavorite(movie)
 }
 
+// Auto-fetch & auth check
 onMounted(() => {
   if (!authStore.isAuthenticated) {
     router.push('/login')
+  } else {
+    fetchMovies()
   }
 })
+
+const onVideoEnded = () => {
+  console.log('Video ended')
+}
 </script>
+
 
 <style scoped>
 .movies-page {

@@ -1,0 +1,133 @@
+version: '3.8'
+
+services:
+  # MongoDB Database
+  mongodb:
+    image: mongo:7.0
+    container_name: mongodb
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USERNAME:-admin}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD:-password123}
+      MONGO_INITDB_DATABASE: ${MONGO_DATABASE:-hiresmart}
+    volumes:
+      - mongodb_data:/data/db
+      - mongodb_config:/data/configdb
+      - ./mongodb/init-scripts:/docker-entrypoint-initdb.d
+    networks:
+      - app-network
+    healthcheck:
+      test: >
+        echo 'db.runCommand("ping").ok' |
+        mongosh -u $$MONGO_INITDB_ROOT_USERNAME -p $$MONGO_INITDB_ROOT_PASSWORD
+        --authenticationDatabase admin --quiet
+      interval: 30s
+      timeout: 15s
+      retries: 5
+      start_period: 30s
+
+  # Qdrant Vector Database
+  qdrant:
+    image: qdrant/qdrant:v1.15.1
+    container_name: qdrant
+    restart: unless-stopped
+    ports:
+      - "6333:6333"
+      - "6334:6334"
+    environment:
+      QDRANT__SERVICE__HTTP_PORT: 6333
+      QDRANT__SERVICE__GRPC_PORT: 6334
+      QDRANT__LOG_LEVEL: INFO
+    volumes:
+      - qdrant_data:/qdrant/storage
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD", "sh", "-c", "timeout 3 bash -c '</dev/tcp/127.0.0.1/6333'"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+  # hiresmart-frontend:
+  #   build: ./Hiresmart-frontend
+  #   ports:
+  #     - "4173:4173"
+  #   restart: unless-stopped
+  #   environment:
+  #     - NODE_ENV=production
+  #   volumes:
+  #   - ./Hiresmart-frontend
+  #   - /app/node_modules
+
+  # Backend Service (FastAPI + AI)
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: backend
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    dns:
+      - 8.8.8.8
+      - 1.1.1.1
+    environment:
+      # Database Configuration
+      MONGODB_URI: mongodb://${MONGO_ROOT_USERNAME:-admin}:${MONGO_ROOT_PASSWORD:-password123}@mongodb:27017/${MONGO_DATABASE:-hiresmart}?authSource=admin
+      QDRANT_HOST: qdrant
+      QDRANT_PORT: 6333
+      QDRANT_URL: http://qdrant:6333
+      # JWT Configuration
+      JWT_SECRET: ${JWT_SECRET:-your-super-secret-jwt-key-change-in-production}
+      JWT_ALGORITHM: ${JWT_ALGORITHM:-HS256}
+      JWT_EXPIRATION_HOURS: ${JWT_EXPIRATION_HOURS:-24}
+
+      # OpenAI Configuration
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-something}
+
+      # Email Configuration
+      SMTP_HOST: ${SMTP_SERVER:-smtp.office365.com}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${EMAIL_ADDRESS:-hiresmartalerts@amberflux.in}
+      SENDER_EMAIL: ${EMAIL_ADDRESS:-hiresmartalerts@amberflux.in}
+      SMTP_PASS: ${EMAIL_PASSWORD:-L)575497423742at}
+    
+      # Application Configuration
+      ENVIRONMENT: ${ENVIRONMENT:-development}
+      DEBUG: ${DEBUG:-true}
+
+      # CORS Configuration
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-http://localhost:3000,http://localhost:80}
+
+      # Rate Limiting
+      RATE_LIMIT_REQUESTS: ${RATE_LIMIT_REQUESTS:-100}
+      RATE_LIMIT_WINDOW: ${RATE_LIMIT_WINDOW:-3600}
+    volumes:
+      - ./AI:/app/AI
+      - ./backend:/app/backend
+      - ./requirements.txt:/app/requirements.txt
+      - ./main.py:/app/main.py
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  mongodb_data:
+    driver: local
+  mongodb_config:
+    driver: local
+  qdrant_data:
+    driver: local
+  nginx_logs:
+    driver: local

@@ -44,7 +44,7 @@ export const useDownloadsStore = defineStore("downloads", () => {
 
   const addDownload = async (request: DownloadRequest): Promise<DownloadItem | null> => {
     try {
-      const response = await apiClient.post<DownloadItem>("/downloads", request)
+      const response = await apiClient.post<DownloadItem>("/download/web", request)
       if (response.data) {
         downloads.value.unshift(response.data)
         return response.data

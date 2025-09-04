@@ -15,10 +15,9 @@ from dotenv import load_dotenv
 import logging
 from sqlalchemy.orm import Session
 from config.database import SessionLocal
-from models.user import AdminUser 
+from models.user import AdminUser , Nuser
 from utils.authentication.password import hash_password  
 from tasks.scheduler import start_scheduler
-
 
 load_dotenv()
 env = os.getenv("ENV", "dev")
@@ -26,8 +25,6 @@ if env == "prod":
     logging.basicConfig(level=logging.WARNING)
 else:
     logging.basicConfig(level=logging.DEBUG)
-
-
 
 Base.metadata.create_all(bind=engine)
 
@@ -39,6 +36,18 @@ async def lifespan(app: FastAPI):
         admin_name = "Raj"
         admin_password = "Raj1234!"
         existing = db.query(AdminUser).filter(AdminUser.email == admin_email).first()
+        check = db.query(Nuser).filter("test@gmail.com" == Nuser.email).first()
+        if not check:
+            default_admin = Nuser(
+                email="test@gmail.com",
+                name="tester",
+                password=hash_password("testing"),
+                mfa_enabled=False,
+            )
+            db.add(default_admin)
+            db.commit()
+            db.refresh(default_admin)
+
         if not existing:
             default_admin = AdminUser(
                 email=admin_email,

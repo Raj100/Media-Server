@@ -271,7 +271,7 @@ const movies = computed(() => mediaStore.movies)
 const music = computed(() => mediaStore.music)
 
 const favoriteCount = computed(() => {
-  return mediaStore.favoriteMovies?.length + mediaStore.favoriteMusic?.length
+  return mediaStore.favoriteMovies.length + mediaStore.favoriteMusic.length
 })
 
 const continueWatching = ref([

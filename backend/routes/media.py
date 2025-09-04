@@ -4,8 +4,9 @@ from sqlalchemy import func, or_, desc, asc
 from typing import List, Optional, Literal
 
 from config.database import get_db
-from models.media import MediaItem
+from models.media import MediaItem , MediaType
 from schemas.media import MediaCreate, MediaResponse, MediaLibrary
+from utils.scanner import scan_and_update_media
 
 router = APIRouter()
 
@@ -49,13 +50,11 @@ def apply_sort(q, *, sort_by: Optional[Literal["title","date","size","rating"]],
 
 @router.get("/", response_model=MediaLibrary)
 def get_media_library(db: Session = Depends(get_db)):
-    movies_q = db.query(MediaItem).filter(MediaItem.type == "movie")
-    music_q  = db.query(MediaItem).filter(MediaItem.type == "music")
-    videos_q = db.query(MediaItem).filter(MediaItem.type == "video")
+    scan_and_update_media(db) 
 
-    movies = movies_q.all()
-    music = music_q.all()
-    videos = videos_q.all()
+    movies = db.query(MediaItem).filter(MediaItem.type == "movie").all()
+    music = db.query(MediaItem).filter(MediaItem.type == "music").all()
+    videos = db.query(MediaItem).filter(MediaItem.type == "video").all()
 
     total_size = sum((i.size or 0) for i in [*movies, *music, *videos])
     total_count = len(movies) + len(music) + len(videos)
@@ -67,6 +66,54 @@ def get_media_library(db: Session = Depends(get_db)):
         "totalCount": total_count,
         "totalSize": total_size,
     }
+# def get_media_library(db: Session = Depends(get_db)):
+#     movies_q = db.query(MediaItem).filter(MediaItem.type == "movie")
+#     music_q  = db.query(MediaItem).filter(MediaItem.type == "music")
+#     videos_q = db.query(MediaItem).filter(MediaItem.type == "video")
+
+#     movies = movies_q.all()
+#     music = music_q.all()
+#     videos = videos_q.all()
+
+#     total_size = sum((i.size or 0) for i in [*movies, *music, *videos])
+#     total_count = len(movies) + len(music) + len(videos)
+
+#     return {
+#         "movies": movies,
+#         "music": music,
+#         "videos": videos,
+#         "totalCount": total_count,
+#         "totalSize": total_size,
+#     }
+
+# @router.get("/movies", response_model=List[MediaResponse])
+# def get_movies(
+#     db: Session = Depends(get_db),
+#     genre: Optional[str] = Query(None),
+#     year: Optional[int] = Query(None),
+#     quality: Optional[str] = Query(None),
+#     search: Optional[str] = Query(None),
+#     sortBy: Optional[Literal["title","date","size","rating"]] = Query(None),
+#     sortOrder: Optional[Literal["asc","desc"]] = Query(None),
+# ):
+#     # Ensure all media in the folder are added
+#     scan_and_update_media(db) 
+    
+#     # Filter by actual movie type
+#     q = db.query(MediaItem).filter(MediaItem.type == MediaType.movie)
+    
+#     # Debugging info
+#     all_items = db.query(MediaItem.title, MediaItem.type).all()
+#     print("all items in DB:", all_items)
+#     print("full objects:", db.query(MediaItem).all())
+    
+#     # Apply filters and sorting
+#     q = apply_filters(q, type_=MediaType.movie, genre=genre, year=year, quality=quality, search=search)
+#     q = apply_sort(q, sort_by=sortBy, sort_order=sortOrder)
+    
+#     return q.all()
+
+
 
 @router.get("/movies", response_model=List[MediaResponse])
 def get_movies(
@@ -78,11 +125,32 @@ def get_movies(
     sortBy: Optional[Literal["title","date","size","rating"]] = Query(None),
     sortOrder: Optional[Literal["asc","desc"]] = Query(None),
 ):
-    q = db.query(MediaItem).filter(MediaItem.type == "movie")
-    q = apply_filters(q, type_="movie", genre=genre, year=year, quality=quality, search=search)
-    q = apply_sort(q, sort_by=sortBy, sort_order=sortOrder)
-    return q.all()
+    # Update DB with new media if found
+    scan_and_update_media(db)
 
+    # Start with all videos in DB
+    q = db.query(MediaItem).filter(MediaItem.type == MediaType.video)
+
+    # Debug: print all items in DB
+    all_items = db.query(MediaItem.title, MediaItem.type).all()
+    print("All items in DB:", [(t[0], t[1].value) for t in all_items])
+    print("Full objects:", db.query(MediaItem).all())
+
+    # Apply filters (genre, year, quality, search)
+    q = apply_filters(
+        q,
+        type_=MediaType.video,  # use enum consistently
+        genre=genre,
+        year=year,
+        quality=quality,
+        search=search
+    )
+
+    # Apply sorting
+    q = apply_sort(q, sort_by=sortBy, sort_order=sortOrder)
+
+    # Return the final list
+    return q.all()
 @router.get("/music", response_model=List[MediaResponse])
 def get_music(
     db: Session = Depends(get_db),
@@ -122,6 +190,7 @@ def add_media_item(payload: MediaCreate, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(item)
     return item
+
 
 @router.delete("/{media_id}", response_model=dict)
 def delete_media_item(media_id: str, db: Session = Depends(get_db)):

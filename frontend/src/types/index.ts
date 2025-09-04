@@ -5,6 +5,8 @@ export * from "./downloads"
 export * from "./server"
 export * from "./api"
 export * from "./ui"
+export * from "./chat"
+
 
 // Global type utilities
 export type Optional<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>

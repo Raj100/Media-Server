@@ -182,10 +182,11 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
+import { showToast } from "@/lib/toast";
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -193,8 +194,8 @@ const authStore = useAuthStore()
 const showSignup = ref(false)
 
 const loginForm = ref({
-  email: 'demo@example.com', // Pre-filled for demo
-  password: 'password'
+  email: 'test@gmail.com', // Pre-filled for demo
+  password: 'testing'
 })
 
 const signupForm = ref({
@@ -208,11 +209,28 @@ const passwordsMatch = computed(() => {
   return signupForm.value.password === signupForm.value.confirmPassword
 })
 
-const handleLogin = async () => {
-  const success = await authStore.login(loginForm.value)
-  if (success) {
+// const handleLogin = async () => {
+//   const success = await authStore.login(loginForm.value)
+//   if (success) {
+//     router.push('/dashboard')
+//   }
+// }
+const loginLoading = ref(false)
+const error = ref("")
+
+const handleLogin = async (): Promise<void> => {
+  loginLoading.value = true
+  error.value = ""
+
+  const response = await authStore.login(loginForm.value)
+  if (!response.success) {
+    error.value = response.error || "Login failed"
+  }
+  if (response.success) {
     router.push('/dashboard')
   }
+
+  loginLoading.value = false
 }
 
 const handleSignup = async () => {

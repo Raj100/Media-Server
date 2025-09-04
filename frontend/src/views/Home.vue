@@ -10,9 +10,9 @@
       v-else-if="!authStore.isAuthenticated"
       class="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 to-blue-50 dark:from-gray-900 dark:to-gray-800"
     >
-      <div class="w-full max-w-md bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
+      <div class="w-full max-w-md bg-white/80 dark:bg-gray-800 rounded-lg shadow-lg p-6">
         <div class="text-center mb-6">
-          <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Media Server</h1>
+          <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Admin Login</h1>
           <p class="text-gray-600 dark:text-gray-400">Sign in to access your media collection</p>
         </div>
 
@@ -53,6 +53,15 @@
             <div v-if="loginLoading" class="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
             Sign In
           </button>
+          <div class="flex align-center justify-center">
+          <router-link to="/dashboard"
+              class=" px-3 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-700"
+            >
+              Normal User Login
+            </router-link>
+            </div>
+          <p class=" dark:text-white" >Guest Credentials: test@gmail.com</p>
+          <p class="dark:text-white" >Password: testing</p>
         </form>
       </div>
     </div>
@@ -60,7 +69,7 @@
     <!-- Dashboard -->
     <div v-else>
       <!-- Header -->
-      <header class="border-b bg-white/80 backdrop-blur-sm dark:bg-gray-900/80">
+      <header class="border-b bg-white backdrop-blur-sm dark:bg-gray-900/80">
         <div class="container mx-auto px-4 py-4 flex items-center justify-between">
           <h1 class="text-2xl font-bold text-purple-600 dark:text-purple-400">Media Server</h1>
           <div class="flex items-center gap-4">
@@ -80,6 +89,11 @@
               </svg>
             </button>
             <span class="text-sm text-gray-600 dark:text-gray-300">Welcome, {{ authStore.userName }}</span>
+            <router-link to="/dashboard"
+              class="px-3 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-700"
+            >
+              main dashboard
+            </router-link>
             <button
               @click="handleLogout"
               class="px-3 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-700"
@@ -282,6 +296,7 @@ const handleLogin = async (): Promise<void> => {
 const handleLogout = async (): Promise<void> => {
   await authStore.logout()
 }
+
 
 onMounted(() => {
   serverStore.fetchServerStats()

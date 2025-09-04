@@ -1,4 +1,7 @@
-@import 'tailwindcss';
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 
 :root {
   /* Base colors */
@@ -119,6 +122,44 @@ body {
     background-position: calc(200px + 100%) 0;
   }
 }
+
+
+
+.toast-success {
+  background-color: #D4EDDA; /* subtle green */
+  color: #155724;
+  font-weight: bold;
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.toast-error {
+  background-color: #F8D7DA;
+  color: #721C24;
+  font-weight: bold;
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.toast-info {
+  background-color: #D1ECF1;
+  color: #0C5460;
+  font-weight: bold;
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.toast-warning {
+  background-color: #FFF3CD;
+  color: #856404;
+  font-weight: bold;
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+
+
+
 
 .shimmer {
   background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);

@@ -5,7 +5,7 @@ from datetime import timedelta
 import traceback
 from datetime import datetime
 from typing import Optional, Literal
-from models.user import AdminUser
+from models.user import AdminUser, Nuser
 from config.database import get_db
 from utils.authentication import jwt, password as pwd
 from utils.authentication.jwt import create_reset_token, decode_reset_token
@@ -25,7 +25,7 @@ class AdminLoginRequest(BaseModel):
 class PublicUser(BaseModel):
     name: str
     email: str
-    role: Literal["admin", ""]
+    role: Literal["ADMIN", "USER"]
     mfa_enabled: bool
     createdAt: datetime
 
@@ -40,23 +40,40 @@ class ResetPasswordRequest(BaseModel):
 
 @router.post("/login", response_model=AdminTokenResponse)
 async def admin_login(request: AdminLoginRequest, db: Session = Depends(get_db)):
-    check_and_store_server_health()
     print("request",request)
     admin = db.query(AdminUser).filter(AdminUser.email == request.email).first()
-    print("admin",admin)
-    if not admin or not pwd.verify_password(request.password, admin.password):
-        print(f"Failed login attempt for admin: {request.email}")
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, error="Invalid credentials" ,detail="Invalid credentials"
-        )
-    token_data = {"sub": str(admin.id), "role": "ADMIN"}
-    token = jwt.create_access_token(data=token_data)
+    if admin and pwd.verify_password(request.password, admin.password):
+        # print(f"Failed login attempt for admin: {request.email}")
+        # raise HTTPException(
+        #     status_code=status.HTTP_401_UNAUTHORIZED, error="Invalid credentials" ,detail="Invalid credentials"
+        # )
+        token_data = {"sub": str(admin.id), "role": "ADMIN"}
+        token = jwt.create_access_token(data=token_data)
     
-    user_data = PublicUser(
-        name=admin.name,
-        email=admin.email,
-        role="",
-        mfa_enabled=admin.mfa_enabled,
-        createdAt=admin.created_at
+        user_data = PublicUser(
+            name=admin.name,
+            email=admin.email,
+            role="ADMIN",
+            mfa_enabled=admin.mfa_enabled,
+            createdAt=admin.created_at
+        )
+        return AdminTokenResponse(success=True,user=user_data,token=token,role="ADMIN")
+    
+    user = db.query(Nuser).filter(Nuser.email == request.email).first()
+    if user and pwd.verify_password(request.password, user.password):
+        token_data = {"sub": str(user.id), "role": "USER"}
+        token = jwt.create_access_token(data=token_data)
+    
+        user_data = PublicUser(
+            name=user.name,
+            email=user.email,
+            role="USER",
+            mfa_enabled=user.mfa_enabled,
+            createdAt=user.created_at
+        )
+        return AdminTokenResponse(success=True,user=user_data,token=token,role="USER")
+    
+    print(f"Failed login attempt for admin: {request.email}")
+    raise HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED, error="Invalid credentials" ,detail="Invalid credentials"
     )
-    return AdminTokenResponse(success=True,user=user_data,token=token)

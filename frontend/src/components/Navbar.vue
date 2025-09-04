@@ -1,9 +1,9 @@
 <template>
-  <nav class="navbar">
-    <div class="nav-container">
+  <nav class="bg-white/95 dark:bg-gray-900/95 backdrop-blur-2xl border-b border-purple-400/10 dark:border-purple-500/20 sticky top-0 z-[1000] transition-all duration-300 ease-in-out">
+    <div class="max-w-[1200px] mx-auto px-4 flex items-center justify-between h-16 text-black dark:text-white">
       <!-- Logo -->
       <div class="nav-brand">
-        <router-link to="/" class="brand-link">
+        <router-link to="/dashboard" class="brand-link">
           <div class="brand-icon">
             <svg viewBox="0 0 24 24" fill="currentColor">
               <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
@@ -146,8 +146,8 @@
         </div>
         
         <!-- Theme Toggle -->
-        <button @click="toggleTheme" class="theme-toggle">
-          <svg v-if="isDarkMode" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+        <button @click="themeStore.toggleMode" class="theme-toggle">
+          <svg v-if="!themeStore.isDark" viewBox="0 0 24 24" fill="none" stroke="currentColor">
             <circle cx="12" cy="12" r="5"/>
             <line x1="12" y1="1" x2="12" y2="3"/>
             <line x1="12" y1="21" x2="12" y2="23"/>
@@ -166,7 +166,7 @@
         <!-- User Menu -->
         <div v-if="isAuthenticated" class="user-menu-dropdown">
           <button @click="toggleUserMenu" class="user-menu-button">
-            <img :src="user.avatar" :alt="user.name" class="user-avatar" />
+            <img :src="user.avatar ? user.avatar : 'abstract-user-avatar.png'" :alt="user.name" class="user-avatar" />
             <span class="user-name">{{ user.name }}</span>
             <svg class="dropdown-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor">
               <polyline points="6,9 12,15 18,9"/>
@@ -175,7 +175,7 @@
           
           <div v-if="showUserMenu" class="user-menu-panel">
             <div class="user-menu-header">
-              <img :src="user.avatar" :alt="user.name" class="menu-avatar" />
+              <img :src="user.avatar ? user.avatar : 'abstract-user-avatar.png'"  :alt="user.name" class="menu-avatar" />
               <div class="menu-user-info">
                 <h4>{{ user.name }}</h4>
                 <p>{{ user.email }}</p>
@@ -464,7 +464,7 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-.navbar {
+/* .navbar {
   background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(20px);
   border-bottom: 1px solid rgba(139, 92, 246, 0.1);
@@ -472,14 +472,14 @@ onUnmounted(() => {
   top: 0;
   z-index: 1000;
   transition: all 0.3s ease;
-}
+} */
 
 :global(.dark) .navbar {
   background: rgba(17, 24, 39, 0.95);
   border-bottom-color: rgba(139, 92, 246, 0.2);
 }
 
-.nav-container {
+/* .nav-container {
   max-width: 1200px;
   margin: 0 auto;
   padding: 0 1rem;
@@ -487,7 +487,7 @@ onUnmounted(() => {
   align-items: center;
   justify-content: space-between;
   height: 4rem;
-}
+} */
 
 .nav-brand {
   flex-shrink: 0;
