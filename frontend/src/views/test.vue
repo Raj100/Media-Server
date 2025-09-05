@@ -120,7 +120,7 @@ const loading = ref<boolean>(false);
 const levels = ref<any[]>([]);
 let hls: Hls | null = null;
 
-const videoId = "43b43fe5-1b80-472c-869b-ef4e4bb65593";
+const videoId = "ad9c5496-b81b-4f8c-954a-e353186d43e8";
 
 function setQuality(levelIndex: number) {
   if (hls) {
@@ -147,6 +147,7 @@ onMounted(async () => {
 
       hls.on(Hls.Events.MANIFEST_PARSED, (_, data) => {
         console.log("Available levels:", data.levels);
+        console.log(levels)
         levels.value = data.levels.map((l: any) => ({
           height: l.height,
           bitrate: l.bitrate,

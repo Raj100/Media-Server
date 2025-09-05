@@ -2,7 +2,7 @@
   <div v-if="isVisible" class="video-player-overlay" @click="closePlayer">
     <div class="video-player-container" @click.stop>
       <div class="video-wrapper" ref="videoWrapper">
-        <video
+        <!-- <video
           ref="videoElement"
           class="video-element"
           :poster="media.thumbnail"
@@ -14,6 +14,26 @@
           <source src="http://localhost:8000/video/6de791e1-9d90-44a5-bbba-3f5af4f95928" type="video/mp4">
           <track kind="subtitles" src="/subtitles/sample.vtt" srclang="en" label="English" default>
           Your browser does not support the video tag.
+        </video> -->
+                <video
+          ref="videoElement"
+          class="video-element"
+          :poster="media.thumbnail"
+          @loadedmetadata="onLoadedMetadata"
+          @timeupdate="onTimeUpdate"
+          @ended="onEnded"
+          @click="togglePlayPause"
+          playsinline
+          controlslist="nodownload"
+        >
+          <!-- no <source>, Hls.js will handle playback -->
+          <track
+            kind="subtitles"
+            src="/subtitles/sample.vtt"
+            srclang="en"
+            label="English"
+            default
+          />
         </video>
         
         <!-- Loading Spinner -->
@@ -128,9 +148,9 @@
                     v-for="quality in availableQualities" 
                     :key="quality"
                     @click="changeQuality(quality)"
-                    :class="{ active: currentQuality === quality }"
+                    :class="{ active: currentQuality === quality.height }"
                   >
-                    {{ quality }}
+                    {{ quality.height }}
                   </button>
                 </div>
               </div>
@@ -190,12 +210,15 @@
 
 <script setup lang="ts">
 import { useVideoStore } from "@/stores/videoStore"
+import Hls from "hls.js";
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import type { Movie as Media } from '@/types/media'
+
 
 const videoStore = useVideoStore()
 console.log("videoStore.videoUrl)",videoStore.videoUrl)
 
-import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
-import type { Media } from '@/types'
+
 
 const props = defineProps<{
   media: Media
@@ -207,6 +230,8 @@ const emit = defineEmits<{
   (e: 'ended'): void
 }>()
 
+// console.log("props.media",props.media.id);
+// console.log("props.isVisible",props.isVisible);
 // Refs
 const videoElement = ref<HTMLVideoElement | null>(null)
 const videoWrapper = ref<HTMLDivElement | null>(null)
@@ -225,7 +250,7 @@ const showVolumeSlider = ref(false)
 const showQualityMenu = ref(false)
 const showSpeedMenu = ref(false)
 const subtitlesEnabled = ref(false)
-const currentQuality = ref('1080p')
+const currentQuality = ref('Auto')
 const playbackSpeed = ref(1)
 const bufferPercentage = ref(0)
 const previewTime = ref<number | null>(null)
@@ -242,7 +267,7 @@ const progressPercentage = computed(() => {
 
 const supportsPiP = computed(() => document.pictureInPictureEnabled)
 
-const availableQualities = ref(['2160p', '1440p', '1080p', '720p', '480p', '360p'])
+const availableQualities = ref([])
 const availableSpeeds = ref([0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2])
 
 // Methods (same as your existing ones)
@@ -304,8 +329,8 @@ const toggleQualityMenu = () => {
   showSpeedMenu.value = false
 }
 
-const changeQuality = (quality: string) => {
-  currentQuality.value = quality
+const changeQuality = (quality) => {
+  currentQuality.value = quality.height
   showQualityMenu.value = false
   // Implement backend source switch if multiple resolutions
 }
@@ -405,18 +430,88 @@ const handleKeyPress = (event: KeyboardEvent) => {
 
 // Watchers
 
+
+let hls: Hls | null = null;
 // Lifecycle
-onMounted(() => {
-  document.addEventListener('keydown', handleKeyPress)
-  document.addEventListener('fullscreenchange', () => {
-    isFullscreen.value = !!document.fullscreenElement
-  })
+// onMounted(() => {
+//   if (!videoElement.value) return;
+
+//   const url = videoStore.videoUrl; // assume store has master.m3u8 URL
+
+//   if (Hls.isSupported()) {
+//     hls = new Hls();
+//     hls.loadSource(url);
+//     hls.attachMedia(videoElement.value);
+
+//     hls.on(Hls.Events.MANIFEST_PARSED, (_: any, data: any) => {
+//       // Fill qualities
+//       availableQualities.value = data.levels.map((l: any, i: number) => ({
+//         height: l.height,
+//         bitrate: l.bitrate,
+//         index: i,
+//       }));
+//       isLoading.value = false;
+//       videoElement.value?.play();
+//       isPlaying.value = true;
+//     });
+
+//     hls.on(Hls.Events.ERROR, (_:any, data:any) => {
+//       console.error("HLS error:", data);
+//     });
+//   } else if (videoElement.value.canPlayType("application/vnd.apple.mpegurl")) {
+//     // Safari native HLS
+//     videoElement.value.src = url;
+//   }
+// });
+onMounted(async () => {
+  if (!videoElement.value) return
+
+  try {
+    isLoading.value = true
+    // console.log("props.media.file_path",props.media.file_path, "ad9c5496-b81b-4f8c-954a-e353186d43e8")
+    await videoStore.fetchVideoUrl(props.media.file_path) // use media id from props
+    const url = videoStore.videoUrl
+
+    if (!url) throw new Error('Video URL not available')
+
+    if (Hls.isSupported()) {
+      hls = new Hls()
+      hls.loadSource(url)
+      hls.attachMedia(videoElement.value)
+
+      hls.on(Hls.Events.MANIFEST_PARSED, (_: any, data: any) => {
+        availableQualities.value = [
+    { height: 'Auto', index: -1 }, ...data.levels.map((l: any, i: number) => ({
+          height: l.height,
+          bitrate: l.bitrate,
+          index: i
+        }))]
+        isLoading.value = false
+        videoElement.value?.play()
+        isPlaying.value = true
+      })
+
+      hls.on(Hls.Events.ERROR, (_: any, data: any) => {
+        console.error('HLS error:', data)
+      })
+
+    } else if (videoElement.value.canPlayType('application/vnd.apple.mpegurl')) {
+      videoElement.value.src = url
+    }
+
+  } catch (err: any) {
+    console.error(err)
+    isLoading.value = false
+  }
 })
 
+
 onUnmounted(() => {
-  document.removeEventListener('keydown', handleKeyPress)
-  if (hideControlsTimeout) clearTimeout(hideControlsTimeout)
-})
+  if (hls) {
+    hls.destroy();
+    hls = null;
+  }
+});
 </script>
 
 <style scoped>

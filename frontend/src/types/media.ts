@@ -29,10 +29,11 @@ export interface Music extends MediaItem {
   type: "music"
   artist: string
   album?: string
-  genre: string[]
+  genre: readonly string[]
   year?: number
   trackNumber?: number
   lyrics?: string
+  isFavorite?: boolean
 }
 
 export interface Video extends MediaItem {

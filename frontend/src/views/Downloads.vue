@@ -22,8 +22,44 @@
     <div class="container mx-auto px-4 py-6">
       <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6 mb-6">
         <h2 class="text-xl font-semibold mb-4">Add New Download</h2>
-        
-        <form @submit.prevent="handleAddDownload" class="space-y-4">
+        <select :key="typess" v-model="uploadtype" name="type" id="" class="border border-2 rounded my-2 dark:border-white px-2 py-1 ">
+              <option value="upload">upload</option>
+              <option value="web">web download link</option>
+        </select>
+        <form v-if="uploadtype=='upload'" @submit.prevent="handleAddUpload" class="space-y-4">
+          <div>
+               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">File</label>
+      <input type="file" required @change="handleFileChange" class="input-field" />
+    </div>
+
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label  for="type" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Content Type
+              </label>
+              <select id="type" v-model="uploadForm.type" class="input-field text-black border border-1 px-2 py-1 rounded my-2 dark:border-white">
+                <option value="movie">Movie</option>
+                <option value="music">Music</option>
+                <option value="video">Video</option>
+              </select>
+            </div>
+                        
+          </div>
+
+          <button
+            type="submit"
+            :disabled="isSubmitting"
+            class="btn-primary"
+          >
+            <div v-if="isSubmitting" class="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2 inline-block"></div>
+            Add Download
+          </button>
+        </form>
+
+
+
+        <form v-if="uploadtype=='web'" @submit.prevent="handleAddDownload" class="space-y-4">
           <div>
             <label for="url" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               URL (Web or Telegram link)
@@ -43,7 +79,7 @@
               <label for="type" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Content Type
               </label>
-              <select id="type" v-model="downloadForm.type" class="input-field">
+              <select id="type" v-model="downloadForm.type" class="input-field text-black border border-1 px-2 py-1 rounded my-2 dark:border-white">
                 <option value="movie">Movie</option>
                 <option value="music">Music</option>
                 <option value="video">Video</option>
@@ -194,7 +230,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from "vue"
 import { useDownloadsStore } from "@/stores/downloads"
-import type { DownloadRequest, DownloadStatus } from "@/types"
+import type { DownloadRequest, DownloadStatus, UploadRequest } from "@/types"
 
 const downloadsStore = useDownloadsStore()
 
@@ -203,6 +239,18 @@ const downloadForm = ref<DownloadRequest>({
   type: "movie",
   quality: "",
 })
+const uploadtype = ref('upload')
+
+const uploadForm = ref<UploadRequest>({
+  file: null as File | null,
+  type: "movie",
+  quality: "",
+})
+
+const handleFileChange = (event: Event) => {
+  const target = event.target as HTMLInputElement
+  uploadForm.value.media = target.files ? target.files[0] : null
+}
 
 const isSubmitting = ref(false)
 const activeTab = ref<"all" | DownloadStatus>("all")
@@ -219,6 +267,20 @@ const getDownloadCount = (status: string): number => {
   return downloadsStore.downloads.filter(d => d.status === status).length
 }
 
+const handleAddUpload = async () => {
+  if (!uploadForm.value.media) return
+  isSubmitting.value = true
+
+  const formData = new FormData()
+  formData.append("file", uploadForm.value.media)
+  formData.append("type", uploadForm.value.type)
+  if (uploadForm.value.quality) formData.append("quality", uploadForm.value.quality)
+
+  await downloadsStore.addUpload(formData)
+
+  uploadForm.value.media = null
+  isSubmitting.value = false
+}
 const handleAddDownload = async (): Promise<void> => {
   isSubmitting.value = true
   await downloadsStore.addDownload(downloadForm.value)

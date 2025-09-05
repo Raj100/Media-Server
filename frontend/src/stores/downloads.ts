@@ -1,6 +1,6 @@
 import { defineStore } from "pinia"
 import { ref, computed } from "vue"
-import type { DownloadItem, DownloadRequest, DownloadStats } from "@/types"
+import type { DownloadItem, DownloadRequest, DownloadStats, UploadRequest } from "@/types"
 import { apiClient } from "@/lib/api"
 
 export const useDownloadsStore = defineStore("downloads", () => {
@@ -51,6 +51,20 @@ export const useDownloadsStore = defineStore("downloads", () => {
       }
     } catch (error) {
       console.error("Failed to add download:", error)
+    }
+    return null
+  }
+    const addUpload = async (formData: FormData): Promise<DownloadItem | null> => {
+    try {
+      const response = await apiClient.post<DownloadItem>("/upload_video", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      })
+      if (response.data) {
+        downloads.value.unshift(response.data)
+        return response.data
+      }
+    } catch (error) {
+      console.error("Failed to add upload:", error)
     }
     return null
   }
@@ -153,6 +167,7 @@ export const useDownloadsStore = defineStore("downloads", () => {
     // Actions
     fetchDownloads,
     addDownload,
+    addUpload,
     pauseDownload,
     resumeDownload,
     cancelDownload,

@@ -25,6 +25,12 @@ export interface DownloadRequest {
   quality?: string
   format?: string
 }
+export interface UploadRequest {
+  file: File
+  type: "movie" | "music" | "video"
+  quality?: string
+  format?: string
+}
 
 export interface DownloadQueue {
   active: DownloadItem[]
@@ -41,3 +47,4 @@ export interface DownloadStats {
   totalDownloaded: number
   averageSpeed: number
 }
+

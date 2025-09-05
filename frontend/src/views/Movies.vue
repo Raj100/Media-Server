@@ -254,6 +254,7 @@ const selectedMovie = ref<Movie | null>(null)
 const currentMovie = ref<Movie | null>(null)
 const showVideoPlayer = ref<boolean>(false)
 
+console.log(currentMovie)
 // Fetch movies from backend
 const fetchMovies = async () => {
   try {
@@ -306,8 +307,8 @@ const playMovie = async (movie: Movie) => {
   currentMovie.value = movie
   showVideoPlayer.value = true
   // mediaStore.playMedia(movie)
-  await videoStore.fetchVideoUrl(movie)
-  console.log("videoStorehhj.videoUrl")
+  // await videoStore.fetchVideoUrl("ad9c5496-b81b-4f8c-954a-e353186d43e8")
+  console.log("movie",movie.id)
   closeModal()
 }
 

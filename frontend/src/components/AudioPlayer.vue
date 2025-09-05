@@ -1,43 +1,38 @@
 <template>
   <div v-if="isVisible" class="audio-player-overlay" @click="closePlayer">
     <div class="audio-player-container" @click.stop>
+      <!-- Close Button -->
       <button @click="closePlayer" class="close-button">
         <svg viewBox="0 0 24 24" fill="currentColor">
           <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
         </svg>
       </button>
-      
-      <!-- Album Art and Info -->
+
+      <!-- Album Art & Track Info -->
       <div class="player-header">
         <div class="album-art">
           <img :src="media.thumbnail" :alt="media.album" />
           <div class="vinyl-effect"></div>
         </div>
-        
         <div class="track-info">
           <h2 class="track-title">{{ media.title }}</h2>
           <p class="track-artist">{{ media.artist }}</p>
           <p class="track-album">{{ media.album }}</p>
         </div>
       </div>
-      
+
       <!-- Progress Bar -->
       <div class="progress-section">
         <div class="time-display">
           <span>{{ formatTime(currentTime) }}</span>
           <span>{{ formatTime(duration) }}</span>
         </div>
-        
-        <div 
-          class="progress-bar" 
-          ref="progressBar"
-          @click="seekTo"
-        >
+        <div class="progress-bar" ref="progressBar" @click="seekTo">
           <div class="progress-fill" :style="{ width: progressPercentage + '%' }"></div>
           <div class="progress-handle" :style="{ left: progressPercentage + '%' }"></div>
         </div>
       </div>
-      
+
       <!-- Main Controls -->
       <div class="main-controls">
         <button @click="toggleShuffle" :class="['control-btn', { active: isShuffled }]">
@@ -45,13 +40,13 @@
             <path d="M10.59 9.17L5.41 4 4 5.41l5.17 5.17 1.42-1.41zM14.5 4l2.04 2.04L4 18.59 5.41 20 17.96 7.46 20 9.5V4h-5.5zm.33 9.41l-1.41 1.41 3.13 3.13L14.5 20H20v-5.5l-2.04 2.04-3.13-3.13z"/>
           </svg>
         </button>
-        
+
         <button @click="previousTrack" class="control-btn">
           <svg viewBox="0 0 24 24" fill="currentColor">
             <path d="M6 6h2v12H6v-12zm3.5 6l8.5 6V6l-8.5 6z"/>
           </svg>
         </button>
-        
+
         <button @click="togglePlayPause" class="control-btn play-pause">
           <svg v-if="isPlaying" viewBox="0 0 24 24" fill="currentColor">
             <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>
@@ -60,13 +55,13 @@
             <path d="M8 5v14l11-7z"/>
           </svg>
         </button>
-        
+
         <button @click="nextTrack" class="control-btn">
           <svg viewBox="0 0 24 24" fill="currentColor">
             <path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/>
           </svg>
         </button>
-        
+
         <button @click="toggleRepeat" :class="['control-btn', { active: repeatMode !== 'off' }]">
           <svg v-if="repeatMode === 'one'" viewBox="0 0 24 24" fill="currentColor">
             <path d="M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2v4zm-4-2V9h-1l-2 1v1h1.5v4H13z"/>
@@ -76,7 +71,7 @@
           </svg>
         </button>
       </div>
-      
+
       <!-- Secondary Controls -->
       <div class="secondary-controls">
         <button @click="toggleFavorite" :class="['control-btn', { active: media.isFavorite }]">
@@ -84,7 +79,7 @@
             <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
           </svg>
         </button>
-        
+
         <div class="volume-control">
           <button @click="toggleMute" class="control-btn">
             <svg v-if="isMuted || volume === 0" viewBox="0 0 24 24" fill="currentColor">
@@ -97,33 +92,24 @@
               <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
             </svg>
           </button>
-          
           <div class="volume-slider">
-            <input
-              type="range"
-              min="0"
-              max="1"
-              step="0.01"
-              v-model="volume"
-              @input="updateVolume"
-              class="volume-range"
-            />
+            <input type="range" min="0" max="1" step="0.01" v-model="volume" @input="updateVolume" class="volume-range" />
           </div>
         </div>
-        
+
         <button @click="togglePlaylist" class="control-btn">
           <svg viewBox="0 0 24 24" fill="currentColor">
             <path d="M15 6H3v2h12V6zm0 4H3v2h12v-2zM3 16h8v-2H3v2zM17 6v8.18c-.31-.11-.65-.18-1-.18-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3V8h3V6h-5z"/>
           </svg>
         </button>
       </div>
-      
-      <!-- Playlist (if visible) -->
+
+      <!-- Playlist -->
       <div v-if="showPlaylist" class="playlist-section">
         <h3>Up Next</h3>
         <div class="playlist-items">
-          <div 
-            v-for="(track, index) in playlist" 
+          <div
+            v-for="(track, index) in playlist"
             :key="track.id"
             :class="['playlist-item', { active: track.id === media.id }]"
             @click="playTrack(track)"
@@ -133,11 +119,11 @@
               <h4>{{ track.title }}</h4>
               <p>{{ track.artist }}</p>
             </div>
-            <span class="track-duration">{{ track.duration }}</span>
+            <span class="track-duration">{{ formatTime(track.duration || 0) }}</span>
           </div>
         </div>
       </div>
-      
+
       <!-- Audio Element -->
       <audio
         ref="audioElement"
@@ -145,39 +131,32 @@
         @timeupdate="onTimeUpdate"
         @ended="onEnded"
       >
-        <source :src="getAudioUrl(media)" type="audio/mpeg">
-        Your browser does not support the audio element.
+        <source :src="getAudioUrl(media)" type="audio/mpeg" />
       </audio>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
-import { useMediaStore } from '../stores/media'
-import type { Movie } from '../types/TS media'
+import { ref, computed, watch, onMounted } from 'vue'
+import { useMediaStore } from '@/stores/media'
+import type { Music } from '@/types/media'
 
-// Props
 const props = defineProps<{
-  media: Movie
+  media: Music
   isVisible?: boolean
 }>()
 
 const emit = defineEmits<{
   (e: 'close'): void
-  (e: 'ended'): void
-  (e: 'favorite-toggled'): void
-  (e: 'track-changed', track: Movie): void
+  (e: 'track-changed', track: Music): void
 }>()
 
-// Store
 const mediaStore = useMediaStore()
 
-// Refs
 const audioElement = ref<HTMLAudioElement | null>(null)
 const progressBar = ref<HTMLDivElement | null>(null)
 
-// State
 const isPlaying = ref(false)
 const currentTime = ref(0)
 const duration = ref(0)
@@ -187,178 +166,120 @@ const isShuffled = ref(false)
 const repeatMode = ref<'off' | 'all' | 'one'>('off')
 const showPlaylist = ref(false)
 
-// Computed
-const progressPercentage = computed(() => (duration.value > 0 ? (currentTime.value / duration.value) * 100 : 0))
-const playlist = computed(() => mediaStore.music)
+const playlist = computed(() => mediaStore.music) // Music[]
 
-// Methods
-const getAudioUrl = (media: Movie) => `/placeholder-audio.mp3?title=${encodeURIComponent(media.title)}`
+watch(volume, (val) => {
+  if (audioElement.value) audioElement.value.volume = val
+})
 
-const togglePlayPause = async () => {
+const progressPercentage = computed(() => {
+  return duration.value ? (currentTime.value / duration.value) * 100 : 0
+})
+
+function togglePlayPause() {
   if (!audioElement.value) return
-  try {
-    if (isPlaying.value) {
-      audioElement.value.pause()
-      isPlaying.value = false
-    } else {
-      await audioElement.value.play()
-      isPlaying.value = true
-    }
-  } catch (err) {
-    console.error('Audio play failed:', err)
+  if (isPlaying.value) {
+    audioElement.value.pause()
+  } else {
+    audioElement.value.play().catch(() => (isPlaying.value = false))
   }
+  isPlaying.value = !isPlaying.value
 }
 
-const previousTrack = () => {
-  const currentIndex = playlist.value.findIndex(track => track.id === props.media.id)
-  if (currentIndex > 0) playTrack(playlist.value[currentIndex - 1])
-  else if (repeatMode.value === 'all') playTrack(playlist.value[playlist.value.length - 1])
-}
-
-const nextTrack = () => {
-  const currentIndex = playlist.value.findIndex(track => track.id === props.media.id)
-  if (currentIndex < playlist.value.length - 1) playTrack(playlist.value[currentIndex + 1])
-  else if (repeatMode.value === 'all') playTrack(playlist.value[0])
-}
-
-const playTrack = async (track: Movie) => {
-  mediaStore.playMedia(track)
+function playTrack(track: Music) {
+  // mediaStore.playMedia(track)
   emit('track-changed', track)
-
   if (audioElement.value) {
     audioElement.value.src = getAudioUrl(track)
-    try {
-      await audioElement.value.play()
-      isPlaying.value = true
-    } catch (err) {
-      console.error('Failed to play track:', err)
-      isPlaying.value = false
-    }
+    audioElement.value.play().then(() => (isPlaying.value = true)).catch(() => (isPlaying.value = false))
   }
 }
 
-const seekTo = (event: MouseEvent) => {
-  if (!progressBar.value || !audioElement.value) return
-  const rect = progressBar.value.getBoundingClientRect()
-  const percentage = (event.clientX - rect.left) / rect.width
-  const newTime = percentage * duration.value
-  audioElement.value.currentTime = newTime
-  currentTime.value = newTime
+function toggleFavorite() {
+  // mediaStore.toggleFavorite(props.media.id, 'music')
 }
 
-const toggleMute = () => {
-  if (!audioElement.value) return
-  audioElement.value.muted = !audioElement.value.muted
-  isMuted.value = audioElement.value.muted
+function toggleMute() {
+  isMuted.value = !isMuted.value
+  if (audioElement.value) audioElement.value.muted = isMuted.value
 }
 
-const updateVolume = () => {
-  if (!audioElement.value) return
-  audioElement.value.volume = volume.value
-  isMuted.value = volume.value === 0
+function updateVolume() {
+  if (audioElement.value) audioElement.value.volume = volume.value
 }
 
-const toggleShuffle = () => (isShuffled.value = !isShuffled.value)
-
-const toggleRepeat = () => {
-  const modes: ('off' | 'all' | 'one')[] = ['off', 'all', 'one']
-  const currentIndex = modes.indexOf(repeatMode.value)
-  repeatMode.value = modes[(currentIndex + 1) % modes.length]
-}
-
-const toggleFavorite = () => {
-  mediaStore.toggleFavorite(props.media.id, 'music')
-  emit('favorite-toggled')
-}
-
-const togglePlaylist = () => (showPlaylist.value = !showPlaylist.value)
-
-const closePlayer = () => {
-  audioElement.value?.pause()
-  emit('close')
-}
-
-const onLoadedMetadata = () => {
+function onLoadedMetadata() {
   if (audioElement.value) duration.value = audioElement.value.duration
 }
 
-const onTimeUpdate = () => {
+function onTimeUpdate() {
   if (audioElement.value) currentTime.value = audioElement.value.currentTime
 }
 
-const onEnded = () => {
-  isPlaying.value = false
+function onEnded() {
   if (repeatMode.value === 'one') {
-    if (!audioElement.value) return
-    audioElement.value.currentTime = 0
-    audioElement.value.play()
-    isPlaying.value = true
+    audioElement.value?.play()
   } else {
     nextTrack()
-    if (repeatMode.value === 'off') emit('ended')
   }
 }
 
-const formatTime = (seconds: number) => {
-  if (!seconds || isNaN(seconds)) return '0:00'
-  const minutes = Math.floor(seconds / 60)
-  const secs = Math.floor(seconds % 60)
-  return `${minutes}:${secs.toString().padStart(2, '0')}`
+function nextTrack() {
+  const currentIndex = playlist.value.findIndex((t) => t.id === props.media.id)
+  let nextIndex = currentIndex + 1
+  if (nextIndex >= playlist.value.length) {
+    nextIndex = repeatMode.value === 'all' ? 0 : currentIndex
+  }
+  playTrack(playlist.value[nextIndex])
 }
 
-const handleKeyPress = (event: KeyboardEvent) => {
-  switch (event.code) {
-    case 'Space':
-      event.preventDefault()
-      togglePlayPause()
-      break
-    case 'ArrowUp':
-      event.preventDefault()
-      volume.value = Math.min(1, volume.value + 0.1)
-      updateVolume()
-      break
-    case 'ArrowDown':
-      event.preventDefault()
-      volume.value = Math.max(0, volume.value - 0.1)
-      updateVolume()
-      break
-    case 'ArrowLeft':
-      event.preventDefault()
-      previousTrack()
-      break
-    case 'ArrowRight':
-      event.preventDefault()
-      nextTrack()
-      break
-    case 'KeyM':
-      event.preventDefault()
-      toggleMute()
-      break
-    case 'Escape':
-      closePlayer()
-      break
-  }
+function previousTrack() {
+  const currentIndex = playlist.value.findIndex((t) => t.id === props.media.id)
+  const prevIndex = currentIndex > 0 ? currentIndex - 1 : 0
+  playTrack(playlist.value[prevIndex])
 }
 
-// Watchers
-watch(
-  () => props.isVisible,
-  async (visible) => {
-    if (visible && audioElement.value) {
-      try {
-        await audioElement.value.play()
-        isPlaying.value = true
-      } catch (err) {
-        console.warn('Autoplay blocked by browser:', err)
-      }
-    }
-  }
-)
+function toggleShuffle() {
+  isShuffled.value = !isShuffled.value
+  // optional: implement shuffle logic in store
+}
 
-// Lifecycle
-onMounted(() => document.addEventListener('keydown', handleKeyPress))
-onUnmounted(() => document.removeEventListener('keydown', handleKeyPress))
+function toggleRepeat() {
+  if (repeatMode.value === 'off') repeatMode.value = 'all'
+  else if (repeatMode.value === 'all') repeatMode.value = 'one'
+  else repeatMode.value = 'off'
+}
+
+function togglePlaylist() {
+  showPlaylist.value = !showPlaylist.value
+}
+
+function seekTo(event: MouseEvent) {
+  if (!progressBar.value || !audioElement.value) return
+  const rect = progressBar.value.getBoundingClientRect()
+  const percent = (event.clientX - rect.left) / rect.width
+  audioElement.value.currentTime = percent * duration.value
+}
+
+function formatTime(time: number) {
+  const mins = Math.floor(time / 60)
+  const secs = Math.floor(time % 60).toString().padStart(2, '0')
+  return `${mins}:${secs}`
+}
+
+function closePlayer() {
+  emit('close')
+}
+
+function getAudioUrl(track: Music) {
+  return `/media/audio/${track.id}.mp3` 
+}
+
+onMounted(() => {
+  if (audioElement.value) audioElement.value.volume = volume.value
+})
 </script>
+
 
 
 
