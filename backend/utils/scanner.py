@@ -1,4 +1,5 @@
 import os
+import subprocess
 from pathlib import Path
 from sqlalchemy.orm import Session
 from typing import List
@@ -77,3 +78,98 @@ def scan_and_update_media(db: Session, media_dir: str = "media/data"):
         print(f"Added files: {added_files}")
     else:
         print("No new media files found.")
+
+
+
+def scan_first_level_hls_folders(db: Session, media_dir: str = "./videos"):
+    media_path = Path(media_dir).resolve()
+    if not media_path.exists():
+        print(f"Media directory {media_path} does not exist.")
+        return
+
+    print(f"Scanning first-level folders in: {media_path}")
+
+    added_videos = []
+
+    for folder in media_path.iterdir():
+        if not folder.is_dir():
+            continue  # skip files
+
+        video_id = folder.name
+
+        # Skip if already exists in DB
+        existing = db.query(MediaItem).filter(MediaItem.file_path == video_id).first()
+        if existing:
+            continue
+
+        media_item = MediaItem(
+            title=video_id,
+            type=MediaType.video,
+            size=0,
+            file_path=video_id,  # store folder name / id
+            format="hls",
+            duration=None,
+            thumbnail=None,
+            poster=None,
+            quality=None,
+            meta=None,
+            year=None,
+            genre=[],
+            director=None,
+            cast=[],
+            rating=None,
+            description=None,
+            trailer=None,
+            category="general",
+            tags=[]
+        )
+
+        db.add(media_item)
+        added_videos.append(video_id)
+
+    if added_videos:
+        db.commit()
+        print(f"Added HLS videos: {added_videos}")
+    else:
+        print("No new HLS videos found.")
+
+
+def update_existing_thumbnails(db: Session, videos_dir: str = "./videos", thumbs_dir: str = "./thumbnails"):
+    videos_path = Path(videos_dir)
+    for folder in videos_path.iterdir():
+        if not folder.is_dir():
+            continue
+        
+        media_item = db.query(MediaItem).filter(MediaItem.file_path == folder.name).first()
+        if not media_item or media_item.thumbnail:
+            continue  # already has thumbnail
+
+        thumb_path = Path(thumbs_dir) / f"{folder.name}.jpg"
+        success = generate_thumbnail_from_hls(folder, thumb_path)
+        if success:
+            media_item.thumbnail = f"/thumbnails/{folder.name}.jpg"
+            db.add(media_item)
+
+    db.commit()
+    print("Thumbnails updated for existing videos.")
+
+def generate_thumbnail_from_hls(hls_folder: str, thumb_path: str, segment_index: int = 0):
+    """
+    Generates a thumbnail from the first segment of an HLS folder.
+    """
+    hls_folder = Path(hls_folder)
+    segment_file = hls_folder / f"segment_{segment_index:03d}.ts"
+    if not segment_file.exists():
+        print(f"No segment found in {hls_folder}")
+        return False
+
+    os.makedirs(os.path.dirname(thumb_path), exist_ok=True)
+    cmd = [
+        "ffmpeg", "-y", "-i", str(segment_file),
+        "-ss", "00:00:01",    # 1 second into the video
+        "-vframes", "1",
+        "-q:v", "2",
+        str(thumb_path)
+    ]
+    subprocess.run(cmd, check=True)
+    return True

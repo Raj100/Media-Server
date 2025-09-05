@@ -83,7 +83,7 @@ app.add_middleware(
 
 app.include_router(auth_router, prefix="/auth", tags=["Authentication"])
 app.include_router(downloads_router, prefix="/download", tags=["Download"])
-app.include_router(stream_router, tags=["Stream"])
+# app.include_router(stream_router, tags=["Stream"])
 app.include_router(websocket_endpoint, tags=["WebSocket"])
 app.include_router(media_router,prefix="/media", tags=["Media"])
 app.include_router(server_router, tags=["Server"])

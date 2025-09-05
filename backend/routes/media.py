@@ -6,7 +6,7 @@ from typing import List, Optional, Literal
 from config.database import get_db
 from models.media import MediaItem , MediaType
 from schemas.media import MediaCreate, MediaResponse, MediaLibrary
-from utils.scanner import scan_and_update_media
+from utils.scanner import scan_and_update_media, scan_first_level_hls_folders , update_existing_thumbnails
 
 router = APIRouter()
 
@@ -50,7 +50,7 @@ def apply_sort(q, *, sort_by: Optional[Literal["title","date","size","rating"]],
 
 @router.get("/", response_model=MediaLibrary)
 def get_media_library(db: Session = Depends(get_db)):
-    scan_and_update_media(db) 
+    # scan_and_update_media(db) 
 
     movies = db.query(MediaItem).filter(MediaItem.type == "movie").all()
     music = db.query(MediaItem).filter(MediaItem.type == "music").all()
@@ -129,6 +129,8 @@ def get_movies(
     # scan_and_update_media(db)
 
     # Start with all videos in DB
+    # scan_first_level_hls_folders(db, "./videos")
+    update_existing_thumbnails(db)
     q = db.query(MediaItem).filter(MediaItem.type == MediaType.video)
 
     # Debug: print all items in DB
