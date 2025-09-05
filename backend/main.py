@@ -9,6 +9,7 @@ from routes.websocket import router as websocket_endpoint
 from routes.stream import router as stream_router
 from routes.media import router as media_router
 from routes.server import router as server_router
+from routes.video import router as video_router
 from config.database import Base, engine
 from contextlib import asynccontextmanager
 from dotenv import load_dotenv
@@ -86,5 +87,7 @@ app.include_router(stream_router, tags=["Stream"])
 app.include_router(websocket_endpoint, tags=["WebSocket"])
 app.include_router(media_router,prefix="/media", tags=["Media"])
 app.include_router(server_router, tags=["Server"])
+app.include_router(video_router, tags=["Video"])
+
 
 

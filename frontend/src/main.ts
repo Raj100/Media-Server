@@ -18,7 +18,7 @@ import Login from "./views/Login.vue"
 import Movies from "./views/Movies.vue"
 import Music from "./views/Music.vue"
 import Dashboard1 from './views/Dashboard1.vue'
-
+import test from './views/test.vue'
 
 
 
@@ -34,6 +34,7 @@ const routes = [
   { path: "/movies", name: "Movies", component: Movies },
   { path: "/music", name: "Music", component:  Music },
   { path: "/dashboard1", name: "Dashboard1", component: Dashboard1 },
+  { path: "/test", name: "test", component: test },
 ]
 
 const router = createRouter({

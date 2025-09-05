@@ -126,7 +126,7 @@ def get_movies(
     sortOrder: Optional[Literal["asc","desc"]] = Query(None),
 ):
     # Update DB with new media if found
-    scan_and_update_media(db)
+    # scan_and_update_media(db)
 
     # Start with all videos in DB
     q = db.query(MediaItem).filter(MediaItem.type == MediaType.video)

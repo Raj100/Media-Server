@@ -11,7 +11,7 @@
           @ended="onEnded"
           @click="togglePlayPause"
         >
-          <source :src="getVideoUrl(media)" type="video/mp4">
+          <source src="http://localhost:8000/video/6de791e1-9d90-44a5-bbba-3f5af4f95928" type="video/mp4">
           <track kind="subtitles" src="/subtitles/sample.vtt" srclang="en" label="English" default>
           Your browser does not support the video tag.
         </video>
@@ -188,26 +188,29 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
+import { useVideoStore } from "@/stores/videoStore"
+
+const videoStore = useVideoStore()
+console.log("videoStore.videoUrl)",videoStore.videoUrl)
+
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import type { Media } from '@/types'
 
-const props = defineProps({
-  media: {
-    type: Object,
-    required: true
-  },
-  isVisible: {
-    type: Boolean,
-    default: false
-  }
-})
+const props = defineProps<{
+  media: Media
+  isVisible: boolean
+}>()
 
-const emit = defineEmits(['close', 'ended'])
+const emit = defineEmits<{
+  (e: 'close'): void
+  (e: 'ended'): void
+}>()
 
 // Refs
-const videoElement = ref(null)
-const videoWrapper = ref(null)
-const progressBar = ref(null)
+const videoElement = ref<HTMLVideoElement | null>(null)
+const videoWrapper = ref<HTMLDivElement | null>(null)
+const progressBar = ref<HTMLDivElement | null>(null)
 
 // State
 const isPlaying = ref(false)
@@ -225,90 +228,68 @@ const subtitlesEnabled = ref(false)
 const currentQuality = ref('1080p')
 const playbackSpeed = ref(1)
 const bufferPercentage = ref(0)
-const previewTime = ref(null)
+const previewTime = ref<number | null>(null)
 const previewPosition = ref(0)
+const videoUrl = ref('')
 
 // Control timeout
-let controlsTimeout = null
-let hideControlsTimeout = null
+let hideControlsTimeout: ReturnType<typeof setTimeout> | null = null
 
 // Computed
 const progressPercentage = computed(() => {
   return duration.value > 0 ? (currentTime.value / duration.value) * 100 : 0
 })
 
-const supportsPiP = computed(() => {
-  return document.pictureInPictureEnabled
-})
+const supportsPiP = computed(() => document.pictureInPictureEnabled)
 
 const availableQualities = ref(['2160p', '1440p', '1080p', '720p', '480p', '360p'])
 const availableSpeeds = ref([0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2])
 
-// Methods
-const getVideoUrl = (media) => {
-  // In a real app, this would return the actual video URL
-  return `/placeholder-video.mp4?title=${encodeURIComponent(media.title)}`
-}
-
+// Methods (same as your existing ones)
 const togglePlayPause = () => {
   if (!videoElement.value) return
-  
-  if (isPlaying.value) {
-    videoElement.value.pause()
-  } else {
-    videoElement.value.play()
-  }
+  if (isPlaying.value) videoElement.value.pause()
+  else videoElement.value.play()
   isPlaying.value = !isPlaying.value
 }
 
 const skipBackward = () => {
-  if (videoElement.value) {
-    videoElement.value.currentTime = Math.max(0, videoElement.value.currentTime - 10)
-  }
+  if (videoElement.value) videoElement.value.currentTime = Math.max(0, videoElement.value.currentTime - 10)
 }
 
 const skipForward = () => {
-  if (videoElement.value) {
-    videoElement.value.currentTime = Math.min(duration.value, videoElement.value.currentTime + 10)
-  }
+  if (videoElement.value) videoElement.value.currentTime = Math.min(duration.value, videoElement.value.currentTime + 10)
 }
 
-const seekTo = (event) => {
+const seekTo = (event: MouseEvent) => {
   if (!progressBar.value || !videoElement.value) return
-  
   const rect = progressBar.value.getBoundingClientRect()
   const percentage = (event.clientX - rect.left) / rect.width
   const newTime = percentage * duration.value
-  
   videoElement.value.currentTime = newTime
   currentTime.value = newTime
 }
 
-const showPreview = (event) => {
+const showPreview = (event: MouseEvent) => {
   if (!progressBar.value) return
-  
   const rect = progressBar.value.getBoundingClientRect()
   const percentage = (event.clientX - rect.left) / rect.width
   previewTime.value = percentage * duration.value
   previewPosition.value = event.clientX - rect.left
 }
 
-const hidePreview = () => {
-  previewTime.value = null
-}
+const hidePreview = () => (previewTime.value = null)
 
 const toggleMute = () => {
-  if (videoElement.value) {
-    videoElement.value.muted = !videoElement.value.muted
-    isMuted.value = videoElement.value.muted
-  }
+  if (!videoElement.value) return
+  videoElement.value.muted = !videoElement.value.muted
+  isMuted.value = videoElement.value.muted
 }
 
 const updateVolume = () => {
-  if (videoElement.value) {
-    videoElement.value.volume = volume.value
-    isMuted.value = volume.value === 0
-  }
+  if (!videoElement.value) return
+  videoElement.value.volume = volume.value
+  isMuted.value = volume.value === 0
 }
 
 const toggleSubtitles = () => {
@@ -323,10 +304,10 @@ const toggleQualityMenu = () => {
   showSpeedMenu.value = false
 }
 
-const changeQuality = (quality) => {
+const changeQuality = (quality: string) => {
   currentQuality.value = quality
   showQualityMenu.value = false
-  // In a real app, you would switch video sources here
+  // Implement backend source switch if multiple resolutions
 }
 
 const toggleSpeedMenu = () => {
@@ -334,48 +315,35 @@ const toggleSpeedMenu = () => {
   showQualityMenu.value = false
 }
 
-const changePlaybackSpeed = (speed) => {
+const changePlaybackSpeed = (speed: number) => {
   playbackSpeed.value = speed
-  if (videoElement.value) {
-    videoElement.value.playbackRate = speed
-  }
+  if (videoElement.value) videoElement.value.playbackRate = speed
   showSpeedMenu.value = false
 }
 
 const togglePictureInPicture = async () => {
   if (!videoElement.value || !supportsPiP.value) return
-  
   try {
-    if (document.pictureInPictureElement) {
-      await document.exitPictureInPicture()
-    } else {
-      await videoElement.value.requestPictureInPicture()
-    }
+    if (document.pictureInPictureElement) await document.exitPictureInPicture()
+    else await videoElement.value.requestPictureInPicture()
   } catch (error) {
-    console.error('Picture-in-Picture error:', error)
+    console.error(error)
   }
 }
 
 const toggleFullscreen = async () => {
   if (!videoWrapper.value) return
-  
   try {
-    if (!document.fullscreenElement) {
-      await videoWrapper.value.requestFullscreen()
-      isFullscreen.value = true
-    } else {
-      await document.exitFullscreen()
-      isFullscreen.value = false
-    }
+    if (!document.fullscreenElement) await videoWrapper.value.requestFullscreen()
+    else await document.exitFullscreen()
+    isFullscreen.value = !!document.fullscreenElement
   } catch (error) {
-    console.error('Fullscreen error:', error)
+    console.error(error)
   }
 }
 
 const closePlayer = () => {
-  if (videoElement.value) {
-    videoElement.value.pause()
-  }
+  videoElement.value?.pause()
   emit('close')
 }
 
@@ -387,14 +355,11 @@ const onLoadedMetadata = () => {
 }
 
 const onTimeUpdate = () => {
-  if (videoElement.value) {
-    currentTime.value = videoElement.value.currentTime
-    
-    // Update buffer
-    if (videoElement.value.buffered.length > 0) {
-      const buffered = videoElement.value.buffered.end(videoElement.value.buffered.length - 1)
-      bufferPercentage.value = (buffered / duration.value) * 100
-    }
+  if (!videoElement.value) return
+  currentTime.value = videoElement.value.currentTime
+  if (videoElement.value.buffered.length > 0) {
+    const buffered = videoElement.value.buffered.end(videoElement.value.buffered.length - 1)
+    bufferPercentage.value = (buffered / duration.value) * 100
   }
 }
 
@@ -403,86 +368,42 @@ const onEnded = () => {
   emit('ended')
 }
 
-const formatTime = (seconds) => {
+const formatTime = (seconds: number) => {
   if (!seconds || isNaN(seconds)) return '0:00'
-  
   const hours = Math.floor(seconds / 3600)
   const minutes = Math.floor((seconds % 3600) / 60)
   const secs = Math.floor(seconds % 60)
-  
-  if (hours > 0) {
-    return `${hours}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
-  }
-  return `${minutes}:${secs.toString().padStart(2, '0')}`
+  return hours > 0
+    ? `${hours}:${minutes.toString().padStart(2,'0')}:${secs.toString().padStart(2,'0')}`
+    : `${minutes}:${secs.toString().padStart(2,'0')}`
 }
 
+// Show controls on mouse movement
 const showControlsTemporarily = () => {
   showControls.value = true
-  clearTimeout(hideControlsTimeout)
-  
-  if (isPlaying.value) {
-    hideControlsTimeout = setTimeout(() => {
-      showControls.value = false
-    }, 3000)
-  }
+  if (hideControlsTimeout) clearTimeout(hideControlsTimeout)
+  if (isPlaying.value) hideControlsTimeout = setTimeout(() => showControls.value = false, 3000)
 }
 
-const handleMouseMove = () => {
-  showControlsTemporarily()
-}
+const handleMouseMove = () => showControlsTemporarily()
 
-const handleKeyPress = (event) => {
-  switch (event.code) {
-    case 'Space':
-      event.preventDefault()
-      togglePlayPause()
-      break
-    case 'ArrowLeft':
-      event.preventDefault()
-      skipBackward()
-      break
-    case 'ArrowRight':
-      event.preventDefault()
-      skipForward()
-      break
-    case 'ArrowUp':
-      event.preventDefault()
-      volume.value = Math.min(1, volume.value + 0.1)
-      updateVolume()
-      break
-    case 'ArrowDown':
-      event.preventDefault()
-      volume.value = Math.max(0, volume.value - 0.1)
-      updateVolume()
-      break
-    case 'KeyF':
-      event.preventDefault()
-      toggleFullscreen()
-      break
-    case 'KeyM':
-      event.preventDefault()
-      toggleMute()
-      break
+const handleKeyPress = (event: KeyboardEvent) => {
+  switch(event.code){
+    case 'Space': event.preventDefault(); togglePlayPause(); break
+    case 'ArrowLeft': event.preventDefault(); skipBackward(); break
+    case 'ArrowRight': event.preventDefault(); skipForward(); break
+    case 'ArrowUp': event.preventDefault(); volume.value = Math.min(1, volume.value+0.1); updateVolume(); break
+    case 'ArrowDown': event.preventDefault(); volume.value = Math.max(0, volume.value-0.1); updateVolume(); break
+    case 'KeyF': event.preventDefault(); toggleFullscreen(); break
+    case 'KeyM': event.preventDefault(); toggleMute(); break
     case 'Escape':
-      if (isFullscreen.value) {
-        toggleFullscreen()
-      } else {
-        closePlayer()
-      }
+      if (isFullscreen.value) toggleFullscreen()
+      else closePlayer()
       break
   }
 }
 
 // Watchers
-watch(() => props.isVisible, (visible) => {
-  if (visible && videoElement.value) {
-    // Auto-play when player opens
-    setTimeout(() => {
-      videoElement.value.play()
-      isPlaying.value = true
-    }, 100)
-  }
-})
 
 // Lifecycle
 onMounted(() => {
@@ -494,7 +415,7 @@ onMounted(() => {
 
 onUnmounted(() => {
   document.removeEventListener('keydown', handleKeyPress)
-  clearTimeout(hideControlsTimeout)
+  if (hideControlsTimeout) clearTimeout(hideControlsTimeout)
 })
 </script>
 

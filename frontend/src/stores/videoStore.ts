@@ -15,6 +15,7 @@ export const useVideoStore = defineStore("video", () => {
   const error = ref<string | null>(null)
 
   const fetchVideoUrl = async (video: Video) => {
+    if (!video?.id) return
     isLoading.value = true
     error.value = null
     try {
@@ -22,7 +23,8 @@ export const useVideoStore = defineStore("video", () => {
       videoUrl.value = response.data.url
     } catch (err: any) {
       error.value = err.response?.data?.detail || "Failed to fetch video"
-      showToast({ message: error.value, type: "error" })
+      showToast({ message: error.value|| "", type: "error" })
+      console.error(err)
     } finally {
       isLoading.value = false
     }

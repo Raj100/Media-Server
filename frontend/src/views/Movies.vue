@@ -233,10 +233,15 @@ import { useAuthStore } from '../stores/auth'
 import { useMediaStore, Movie } from '../stores/media'
 import Navbar from '../components/Navbar.vue'
 import VideoPlayer from '../components/VideoPlayer.vue'
+import { useVideoStore } from "@/stores/videoStore"
+
+const videoStore = useVideoStore()
+
 
 const router = useRouter()
 const authStore = useAuthStore()
 const mediaStore = useMediaStore()
+
 
 // Search & Filters
 const searchQuery = ref<string>('')
@@ -297,10 +302,12 @@ const closeModal = () => {
   selectedMovie.value = null
 }
 
-const playMovie = (movie: Movie) => {
+const playMovie = async (movie: Movie) => {
   currentMovie.value = movie
   showVideoPlayer.value = true
-  mediaStore.playMedia(movie) // optional backend tracking
+  // mediaStore.playMedia(movie)
+  await videoStore.fetchVideoUrl(movie)
+  console.log("videoStorehhj.videoUrl")
   closeModal()
 }
 
