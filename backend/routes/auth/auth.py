@@ -13,14 +13,9 @@ from fastapi.responses import RedirectResponse
 import httpx
 
 # --- Configuration ---
-GOOGLE_CLIENT_ID = "476141076395-isuku945l5bbf9o3k5scjatjdkd720oe.apps.googleusercontent.com"
-# Corrected: Use a valid client secret here
-GOOGLE_CLIENT_SECRET = "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" 
-JWT_SECRET = "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" # Use a separate, strong secret for your app's JWT
-JWT_ALGO = "HS256"
+
 
 # The redirect URI on your FRONTEND
-FRONTEND_REDIRECT_URI = "http://localhost:5173/auth/callback" 
 
 # FIX: Remove redirect_uri from the constructor.
 # The redirect URI is passed to the methods that need it.

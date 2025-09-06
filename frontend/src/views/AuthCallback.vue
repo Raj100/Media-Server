@@ -17,8 +17,7 @@ const authStore = useAuthStore();
 onMounted(async () => {
   const code = route.query.code;
   if (!code) {
-    // If no code, something went wrong, redirect to login
-    router.push('/login?error=no_code');
+    router.push('/?error=no_code');
     return;
   }
 try{
@@ -26,7 +25,7 @@ try{
   router.push('/dashboard');
 }
 catch(e){
-    router.push('/Login');
+    router.push('/');
 }
   
 });
