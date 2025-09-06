@@ -8,7 +8,7 @@
             <p class="text-gray-600 dark:text-gray-400">Manage your media server</p>
           </div>
           <router-link
-            to="/"
+            to="/dashboard"
             class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
           >
             Back to Dashboard

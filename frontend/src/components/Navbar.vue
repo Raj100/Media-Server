@@ -182,7 +182,9 @@
               </div>
             </div>
             
+            
             <div class="user-menu-items">
+              <router-link to="/profile">
               <button @click="viewProfile" class="menu-item">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
                   <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
@@ -190,7 +192,9 @@
                 </svg>
                 Profile Settings
               </button>
-              
+              </router-link>
+
+              <router-link to="/server-dashboard">
               <button @click="viewPreferences" class="menu-item">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
                   <circle cx="12" cy="12" r="3"/>
@@ -198,7 +202,19 @@
                 </svg>
                 Preferences
               </button>
-              
+              </router-link>
+
+              <router-link to="/media">
+              <button @click="viewPreferences" class="menu-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <circle cx="12" cy="12" r="3"/>
+                  <path d="M12 1v6m0 6v6m11-7h-6m-6 0H1"/>
+                </svg>
+                Manage Media
+              </button>
+              </router-link>
+
+              <router-link to="/status">
               <button @click="viewStats" class="menu-item">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
                   <path d="M3 3v18h18"/>
@@ -206,6 +222,7 @@
                 </svg>
                 Statistics
               </button>
+              </router-link>
               
               <div class="menu-divider"></div>
               
@@ -286,7 +303,7 @@
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { RouterLink, useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 import { useThemeStore } from '../stores/theme'
 import { useChatStore } from '../stores/chat'

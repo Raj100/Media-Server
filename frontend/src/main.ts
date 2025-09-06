@@ -19,12 +19,12 @@ import Movies from "./views/Movies.vue"
 import Music from "./views/Music.vue"
 import Dashboard1 from './views/Dashboard1.vue'
 import test from './views/test.vue'
-
+import AuthCallback from './views/AuthCallback.vue'
 
 
 const routes = [
-  { path: "/", name: "Home", component: Home },
-  { path: "/login", name: "Login", component: Login },
+  { path: "/", name: "Login", component: Login },
+  { path: "/server-dashboard", name: "Home", component: Home },
   { path: "/dashboard", name: "Dashboard", component: Dashboard },
   { path: "/admin", name: "Admin", component: Admin },
   { path: "/downloads", name: "Downloads", component: Downloads },
@@ -35,6 +35,7 @@ const routes = [
   { path: "/music", name: "Music", component:  Music },
   { path: "/dashboard1", name: "Dashboard1", component: Dashboard1 },
   { path: "/test", name: "test", component: test },
+  {path: "/auth/callback",name: "AuthCallback", component: AuthCallback},
 ]
 
 const router = createRouter({

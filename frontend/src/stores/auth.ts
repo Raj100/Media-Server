@@ -14,6 +14,9 @@ export const useAuthStore = defineStore("auth", () => {
   const isAdmin = computed(() => user.value?.role === "admin")
   const userName = computed(() => user.value?.name || "")
 
+
+
+  
   // Actions
   const login = async (credentials: LoginCredentials) => {
     isLoading.value = true
@@ -66,9 +69,43 @@ export const useAuthStore = defineStore("auth", () => {
   }
 
   const loginWithGoogle = async () => {
-    // Placeholder
-    showToast({ message: "Google login not implemented", type: "error" })
-    return { success: false, error: "Not implemented" }
+    isLoading.value = true
+    error.value = null
+    try {
+      const response = await apiClient.get('/auth/login/google');
+    const { url } = response.data;
+    window.location.href = url;
+    } catch (err: any) {
+      console.log(err)
+      isLoading.value = false
+      error.value = "Google login init failed"
+      showToast({ message: err, type: "error" })
+    }
+
+  }
+
+  const callback = async(code: any)=>{
+    try {
+    // Call your backend with the authorization code
+    const response = await apiClient.get(`/auth/callback?code=${code}`);
+    console.log("User info from backend:", response.data.user_info);
+    if (response.data.success && response.data.user && response.data.token) {
+        user.value = response.data.user
+        token.value = response.data.token
+        localStorage.setItem("auth_token", response.data.token)
+        localStorage.setItem("user", JSON.stringify(response.data.user))
+        showToast({ message: "Signup successful", type: "success" })
+      } else {
+        error.value = response.data.error || "Signup failed"
+        showToast({ message: error.value || "Signup failed", type: "error" })
+      }
+      return response.data
+  } catch (error) {
+    console.error("Failed to authenticate with backend:", error);
+    showToast({ message: "Login failed", type: "error" });
+    // router.push('/login');
+  }
+
   }
 
   const logout = async () => {
@@ -107,5 +144,6 @@ export const useAuthStore = defineStore("auth", () => {
     loginWithGoogle,
     logout,
     initializeAuth,
+    callback
   }
 })

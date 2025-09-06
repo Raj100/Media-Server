@@ -2,6 +2,7 @@ import { defineStore } from "pinia"
 import { ref, computed } from "vue"
 import type { DownloadItem, DownloadRequest, DownloadStats, UploadRequest } from "@/types"
 import { apiClient } from "@/lib/api"
+import { showToast } from "@/lib/toast"
 
 export const useDownloadsStore = defineStore("downloads", () => {
   // State
@@ -60,6 +61,7 @@ export const useDownloadsStore = defineStore("downloads", () => {
         headers: { "Content-Type": "multipart/form-data" },
       })
       if (response.data) {
+        showToast({ message: "Upload successful. Media will be ready soon after Preprocessing..", type: "success" })
         downloads.value.unshift(response.data)
         return response.data
       }

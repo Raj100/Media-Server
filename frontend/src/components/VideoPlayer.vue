@@ -146,7 +146,7 @@
                 <div v-if="showQualityMenu" class="quality-menu">
                   <button 
                     v-for="quality in availableQualities" 
-                    :key="quality"
+                    :key="quality.height"
                     @click="changeQuality(quality)"
                     :class="{ active: currentQuality === quality.height }"
                   >
@@ -212,7 +212,7 @@
 import { useVideoStore } from "@/stores/videoStore"
 import Hls from "hls.js";
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
-import type { Movie as Media } from '@/types/media'
+import type { Movie as Media, Quality } from '@/types/media'
 
 
 const videoStore = useVideoStore()
@@ -267,7 +267,7 @@ const progressPercentage = computed(() => {
 
 const supportsPiP = computed(() => document.pictureInPictureEnabled)
 
-const availableQualities = ref([])
+const availableQualities = ref<Quality[]>([])
 const availableSpeeds = ref([0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2])
 
 // Methods (same as your existing ones)
@@ -329,7 +329,7 @@ const toggleQualityMenu = () => {
   showSpeedMenu.value = false
 }
 
-const changeQuality = (quality) => {
+const changeQuality = (quality: Quality) => {
   currentQuality.value = quality.height
   showQualityMenu.value = false
   // Implement backend source switch if multiple resolutions
@@ -494,6 +494,7 @@ onMounted(async () => {
       hls.on(Hls.Events.ERROR, (_: any, data: any) => {
         console.error('HLS error:', data)
       })
+      console.log(availableQualities)
 
     } else if (videoElement.value.canPlayType('application/vnd.apple.mpegurl')) {
       videoElement.value.src = url

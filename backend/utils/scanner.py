@@ -153,12 +153,13 @@ def update_existing_thumbnails(db: Session, videos_dir: str = "./videos", thumbs
     db.commit()
     print("Thumbnails updated for existing videos.")
 
-def generate_thumbnail_from_hls(hls_folder: str, thumb_path: str, segment_index: int = 0):
+def generate_thumbnail_from_hls(hls_folder: str, thumb_path: str, segment_index: int = 000):
     """
     Generates a thumbnail from the first segment of an HLS folder.
     """
     hls_folder = Path(hls_folder)
-    segment_file = hls_folder / f"segment_{segment_index:03d}.ts"
+    segment_file = hls_folder/ f"360p/segment_{segment_index:03d}.ts"
+    print(segment_file)
     if not segment_file.exists():
         print(f"No segment found in {hls_folder}")
         return False

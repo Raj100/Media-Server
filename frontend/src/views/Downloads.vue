@@ -9,7 +9,7 @@
             <p class="text-gray-600 dark:text-gray-400">Manage your downloads from web and Telegram links</p>
           </div>
           <router-link
-            to="/"
+            to="/dashboard"
             class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
           >
             Back to Dashboard
@@ -22,7 +22,7 @@
     <div class="container mx-auto px-4 py-6">
       <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6 mb-6">
         <h2 class="text-xl font-semibold mb-4">Add New Download</h2>
-        <select :key="typess" v-model="uploadtype" name="type" id="" class="border border-2 rounded my-2 dark:border-white px-2 py-1 ">
+        <select v-model="uploadtype" name="type" id="" class="border border-2 rounded my-2 dark:border-white px-2 py-1 ">
               <option value="upload">upload</option>
               <option value="web">web download link</option>
         </select>
@@ -52,8 +52,8 @@
             :disabled="isSubmitting"
             class="btn-primary"
           >
-            <div v-if="isSubmitting" class="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2 inline-block"></div>
-            Add Download
+            <div v-if="isSubmitting" class="animate-spin rounded-full h-4 w-4 border border-b-2 border-black mr-2 inline-block dark:border-white"></div>
+            {{ isSubmitting ? "Processing..." : "Add Download" }}
           </button>
         </form>
 
@@ -230,7 +230,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from "vue"
 import { useDownloadsStore } from "@/stores/downloads"
-import type { DownloadRequest, DownloadStatus, UploadRequest } from "@/types"
+import type { DownloadRequest, DownloadStatus, UploadRequest } from "../types"
 
 const downloadsStore = useDownloadsStore()
 
@@ -249,7 +249,7 @@ const uploadForm = ref<UploadRequest>({
 
 const handleFileChange = (event: Event) => {
   const target = event.target as HTMLInputElement
-  uploadForm.value.media = target.files ? target.files[0] : null
+  uploadForm.value.file = target.files?.[0] ?? null
 }
 
 const isSubmitting = ref(false)
@@ -268,17 +268,18 @@ const getDownloadCount = (status: string): number => {
 }
 
 const handleAddUpload = async () => {
-  if (!uploadForm.value.media) return
+  if (!uploadForm.value.file) return
   isSubmitting.value = true
 
+
   const formData = new FormData()
-  formData.append("file", uploadForm.value.media)
+  formData.append("file", uploadForm.value.file)
   formData.append("type", uploadForm.value.type)
   if (uploadForm.value.quality) formData.append("quality", uploadForm.value.quality)
 
   await downloadsStore.addUpload(formData)
 
-  uploadForm.value.media = null
+  uploadForm.value.file = null
   isSubmitting.value = false
 }
 const handleAddDownload = async (): Promise<void> => {

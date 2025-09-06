@@ -26,7 +26,7 @@ export interface DownloadRequest {
   format?: string
 }
 export interface UploadRequest {
-  file: File
+  file: File | null
   type: "movie" | "music" | "video"
   quality?: string
   format?: string

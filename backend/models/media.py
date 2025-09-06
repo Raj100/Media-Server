@@ -3,6 +3,9 @@ from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.sql import func
 from enum import Enum as PyEnum
 import uuid
+from pydantic import BaseModel
+from typing import Optional
+
 
 from config.database import Base
 
@@ -10,6 +13,11 @@ class MediaType(str, PyEnum):
     movie = "movie"
     music = "music"
     video = "video"
+
+class MediaMeta(BaseModel):
+    width: int
+    height: int
+    bitrate: int
 
 class MediaItem(Base):
     __tablename__ = "media_items"
@@ -30,8 +38,7 @@ class MediaItem(Base):
 
     file_path = Column(String, nullable=False)
 
-    # ⚠️ Use 'meta' as the Python attribute, but keep the DB column name "metadata"
-    meta = Column("metadata", JSONB, nullable=True)
+    meta =  Optional[MediaMeta]
 
     # Movie-specific
     year = Column(Integer)

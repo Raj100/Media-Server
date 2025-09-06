@@ -89,7 +89,7 @@
               :class="viewMode === 'list' ? 'w-32 h-48 flex-shrink-0 rounded-lg mr-6' : ''"
             >
               <img
-                :src="movie.thumbnail"
+                :src="`${baseUrl}${movie.thumbnail}`"
                 :alt="movie.title"
                 class="w-full h-full object-cover transition-transform hover:scale-105"
               />
@@ -126,7 +126,7 @@
                 <span>{{ movie.year }}</span>
                 <span>{{ movie.duration }}</span>
               </div>
-              <p class="text-sm opacity-80" v-if="viewMode === 'list'">{{ movie.description }}</p>
+              <p class="text-sm opacity-80" v-if="viewMode as 'grid' | 'list' === 'list'">{{ movie.description }}</p>
             </div>
 
             <div class="flex-1" v-else>
@@ -162,7 +162,7 @@
 
         <div class="flex gap-8 p-8 md:flex-col md:p-4">
           <div class="flex-shrink-0 w-72 md:w-full md:mx-auto">
-            <img :src="selectedMovie.thumbnail" :alt="selectedMovie.title" class="w-full rounded-lg" />
+            <img :src="`${baseUrl}${selectedMovie.thumbnail}`" :alt="selectedMovie.title" class="w-full rounded-lg" />
           </div>
 
           <div class="flex-1">
@@ -170,10 +170,10 @@
               {{ selectedMovie.title }}
             </h2>
             <div class="flex flex-wrap gap-4 mb-6">
-              <span class="bg-purple-200 dark:bg-purple-900 px-4 py-2 rounded-full text-sm font-medium">⭐ {{ selectedMovie.rating }}</span>
-              <span class="bg-purple-200 dark:bg-purple-900 px-4 py-2 rounded-full text-sm font-medium">{{ selectedMovie.year }}</span>
-              <span class="bg-purple-200 dark:bg-purple-900 px-4 py-2 rounded-full text-sm font-medium">{{ selectedMovie.duration }}</span>
-              <span class="bg-purple-200 dark:bg-purple-900 px-4 py-2 rounded-full text-sm font-medium">{{ selectedMovie.genre }}</span>
+              <span class="bg-purple-200 dark:bg-purple-900 px-4 py-2 rounded-full text-sm font-medium">⭐ {{ selectedMovie.rating ?selectedMovie.rating:"NaN" }}</span>
+              <span class="bg-purple-200 dark:bg-purple-900 px-4 py-2 rounded-full text-sm font-medium">{{ selectedMovie.year ?selectedMovie.year:"Year unknown" }}</span>
+              <span class="bg-purple-200 dark:bg-purple-900 px-4 py-2 rounded-full text-sm font-medium">{{ selectedMovie.duration ? `${selectedMovie.duration}s`:"undefined" }} </span>
+              <span class="bg-purple-200 dark:bg-purple-900 px-4 py-2 rounded-full text-sm font-medium">{{ selectedMovie.genre.length>0? selectedMovie.genre: "unknown genre" }}</span>
             </div>
             <p class="text-lg mb-6 opacity-90">{{ selectedMovie.description }}</p>
 
@@ -227,16 +227,17 @@
 
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, type Ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
-import { useMediaStore, Movie } from '../stores/media'
+import { useMediaStore } from '../stores/media'
 import Navbar from '../components/Navbar.vue'
 import VideoPlayer from '../components/VideoPlayer.vue'
 import { useVideoStore } from "@/stores/videoStore"
-
+import type {Movie} from "../types/media"
 const videoStore = useVideoStore()
 
+const baseUrl = import.meta.env.VITE_API_BASE_URL;
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -264,31 +265,41 @@ const fetchMovies = async () => {
   }
 }
 
-// Computed filtered & sorted movies
-const filteredAndSortedMovies = computed<Movie[]>(() => {
-  let filtered = mediaStore.movies
+const filteredAndSortedMovies = computed(() => {
+  // Spread to make a mutable copy for sorting
+  let filtered = [...mediaStore.movies]
 
+  // Filter by search query
   if (searchQuery.value) {
+    const query = searchQuery.value.toLowerCase()
     filtered = filtered.filter(movie =>
-      movie.title.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-      movie.genre.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-      movie.description.toLowerCase().includes(searchQuery.value.toLowerCase())
+      movie.title.toLowerCase().includes(query) ||
+      movie.genre.some(g => g.toLowerCase().includes(query)) ||
+      (movie.description?.toLowerCase().includes(query))
     )
   }
 
+  // Filter by selected genre
   if (selectedGenre.value) {
-    filtered = filtered.filter(movie => movie.genre === selectedGenre.value)
+    filtered = filtered.filter(movie => movie.genre.includes(selectedGenre.value))
   }
 
-  return filtered.sort((a, b) => {
-    switch (sortBy.value) {
-      case 'year': return b.year - a.year
-      case 'rating': return b.rating - a.rating
-      case 'duration': return a.duration.localeCompare(b.duration)
-      default: return a.title.localeCompare(b.title)
-    }
-  })
-})
+  // Sort
+return filtered.sort((a, b) => {
+  switch (sortBy.value) {
+    case "year":
+      return (b.year ?? 0) - (a.year ?? 0)
+    case "rating":
+      return (b.rating ?? 0) - (a.rating ?? 0)
+    case "duration":
+      // Treat undefined as 0
+      return (a.duration ?? 0) - (b.duration ?? 0)
+    default:
+      return a.title.localeCompare(b.title)
+  }
+})})
+
+
 
 // UI actions
 const toggleView = () => {
@@ -318,7 +329,7 @@ const closeVideoPlayer = () => {
 }
 
 const toggleFavorite = (movie: Movie) => {
-  mediaStore.toggleFavorite(movie)
+  // mediaStore.toggleFavorite(movie)
 }
 
 // Auto-fetch & auth check

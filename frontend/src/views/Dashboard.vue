@@ -83,7 +83,7 @@
               @click="resumeWatching(item)"
             >
               <div class="continue-thumbnail">
-                <img :src="item.thumbnail" :alt="item.title" />
+                <img :src="`${baseUrl}${item.thumbnail}`" :alt="item.title" />
                 <div class="progress-overlay">
                   <div class="progress-bar">
                     <div class="progress-fill" :style="{ width: item.progress + '%' }"></div>
@@ -126,7 +126,7 @@
               @click="playMedia(item)"
             >
               <div class="media-poster">
-                <img :src="item.thumbnail" :alt="item.title" />
+                <img :src="`${baseUrl}${item.thumbnail}`" :alt="item.title" />
                 <div class="media-overlay">
                   <button class="play-button">
                     <svg viewBox="0 0 24 24" fill="currentColor">
@@ -134,7 +134,7 @@
                     </svg>
                   </button>
                 </div>
-                <div class="media-type">{{ item.genre || item.artist }}</div>
+                <div class="media-type">  {{ 'artist' in item ? item.artist : item.genre }}</div>
               </div>
               
               <div class="media-info">
@@ -160,7 +160,7 @@
               @click="playMedia(item)"
             >
               <div class="recommendation-poster">
-                <img :src="item.thumbnail" :alt="item.title" />
+                <img :src="`${baseUrl}${item.thumbnail}`" :alt="item.title" />
                 <div class="recommendation-overlay">
                   <div class="recommendation-rating">
                     <svg viewBox="0 0 24 24" fill="currentColor">
@@ -179,7 +179,7 @@
               
               <div class="recommendation-info">
                 <h4>{{ item.title }}</h4>
-                <p>{{ item.genre || item.artist }}</p>
+                <p>  {{ 'artist' in item ? item.artist : item.genre }}</p>
                 <div class="recommendation-reason">Because you liked similar content</div>
               </div>
             </div>
@@ -212,7 +212,7 @@
               </div>
               
               <div class="activity-media">
-                <img :src="activity.item.thumbnail" :alt="activity.item.title" />
+                <img :src="`${baseUrl}${activity.item.thumbnail}`" :alt="activity.item.title" />
               </div>
             </div>
           </div>
@@ -225,11 +225,13 @@
           </div>
           
           <div class="actions-grid">
-            <button @click="uploadMedia" class="action-card upload">
+            <router-link to="/downloads">
+            <button class="action-card upload">
               <div class="action-icon">📁</div>
               <h3>Upload Media</h3>
               <p>Add new content</p>
             </button>
+            </router-link>
             
             <button @click="createPlaylist" class="action-card playlist">
               <div class="action-icon">🎵</div>
@@ -252,128 +254,167 @@
         </section>
       </div>
     </div>
+      <VideoPlayer
+      v-if="currentMovie"
+      :media="currentMovie"
+      :isVisible="showVideoPlayer"
+      @close="closeVideoPlayer"
+      @ended="onVideoEnded"
+    />
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 import { useMediaStore } from '../stores/media'
 import Navbar from '../components/Navbar.vue'
+import type { Movie, Music } from '../types/media';
 
 const router = useRouter()
 const authStore = useAuthStore()
 const mediaStore = useMediaStore()
 
 const user = computed(() => authStore.user)
-const movies = computed(() => mediaStore.movies)
-const music = computed(() => mediaStore.music)
+const movies = computed<readonly Movie[]>(() => mediaStore.movies)
+const music = computed<readonly Music[]>(() => mediaStore.music)
 
-const favoriteCount = computed(() => {
-  return mediaStore.favoriteMovies?.length + mediaStore.favoriteMusic?.length
+const baseUrl = import.meta.env.VITE_API_BASE_URL
+
+const selectedMovie = ref<Movie | null>(null)
+const currentMovie = ref<Movie | null>(null)
+const showVideoPlayer = ref<boolean>(false)
+
+const favoriteCount = computed<number>(() => {
+  return (mediaStore.favoriteMovies?.length || 0) + (mediaStore.favoriteMusic?.length || 0)
 })
 
-const continueWatching = ref([
-  {
-    id: 1,
-    title: 'The Matrix',
-    thumbnail: '/matrix-movie-poster.png',
-    progress: 65,
-    timeLeft: '45 min'
-  },
-  {
-    id: 2,
-    title: 'Inception',
-    thumbnail: '/inception-movie-poster.png',
-    progress: 30,
-    timeLeft: '1h 20min'
-  },
-  {
-    id: 3,
-    title: 'Interstellar',
-    thumbnail: '/interstellar-inspired-poster.png',
-    progress: 85,
-    timeLeft: '25 min'
+const fetchMovies = async () => {
+  try {
+    await mediaStore.fetchMovies()
+  } catch (error) {
+    console.error('Error fetching movies:', error)
   }
+}
+
+interface ContinueWatchingItem {
+  id: number;
+  title: string;
+  thumbnail: string;
+  progress: number;
+  timeLeft: string;
+}
+
+const continueWatching = ref<ContinueWatchingItem[]>([
+//   {
+//     id: 1,
+//     title: 'The Matrix',
+//     thumbnail: '/matrix-movie-poster.png',
+//     progress: 65,
+//     timeLeft: '45 min'
+//   },
+//   {
+//     id: 2,
+//     title: 'Inception',
+//     thumbnail: '/inception-movie-poster.png',
+//     progress: 30,
+//     timeLeft: '1h 20min'
+//   },
+//   {
+//     id: 3,
+//     title: 'Interstellar',
+//     thumbnail: '/interstellar-inspired-poster.png',
+//     progress: 85,
+//     timeLeft: '25 min'
+//   }
 ])
 
-const recentlyAdded = computed(() => {
+// const continueWatching =ref<ContinueWatchingItem[]>(movies)
+const recentlyAdded = computed<(Movie | Music)[]>(() => {
   return [...movies.value, ...music.value].slice(-6)
 })
 
-const recommendations = computed(() => {
+const recommendations = computed<Movie[]>(() => {
   return movies.value.slice(0, 4)
 })
 
-const recentActivity = ref([
-  {
-    id: 1,
-    user: { name: 'Sarah Johnson', avatar: '/diverse-user-avatars.png' },
-    action: 'recommended',
-    item: { title: 'Dune', thumbnail: '/inspired-by-dune-poster.png' },
-    timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000)
-  },
-  {
-    id: 2,
-    user: { name: 'Mike Chen', avatar: '/google-user-avatar.png' },
-    action: 'shared',
-    item: { title: 'Bohemian Rhapsody', thumbnail: '/queen-album-cover.png' },
-    timestamp: new Date(Date.now() - 4 * 60 * 60 * 1000)
-  },
-  {
-    id: 3,
-    user: { name: 'Emma Wilson', avatar: '/abstract-user-avatar.png' },
-    action: 'added to favorites',
-    item: { title: 'Mad Max: Fury Road', thumbnail: '/mad-max-inspired-poster.png' },
-    timestamp: new Date(Date.now() - 6 * 60 * 60 * 1000)
-  }
+interface RecentActivityItem {
+  id: number;
+  user: { name: string; avatar: string };
+  action: string;
+  item: { title: string; thumbnail: string };
+  timestamp: Date;
+}
+
+const recentActivity = ref<RecentActivityItem[]>([
+//   {
+//     id: 1,
+//     user: { name: 'Sarah Johnson', avatar: '/diverse-user-avatars.png' },
+//     action: 'recommended',
+//     item: { title: 'Dune', thumbnail: '/inspired-by-dune-poster.png' },
+//     timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000)
+//   },
+//   {
+//     id: 2,
+//     user: { name: 'Mike Chen', avatar: '/google-user-avatar.png' },
+//     action: 'shared',
+//     item: { title: 'Bohemian Rhapsody', thumbnail: '/queen-album-cover.png' },
+//     timestamp: new Date(Date.now() - 4 * 60 * 60 * 1000)
+//   },
+//   {
+//     id: 3,
+//     user: { name: 'Emma Wilson', avatar: '/abstract-user-avatar.png' },
+//     action: 'added to favorites',
+//     item: { title: 'Mad Max: Fury Road', thumbnail: '/mad-max-inspired-poster.png' },
+//     timestamp: new Date(Date.now() - 6 * 60 * 60 * 1000)
+//   }
 ])
 
-const playMedia = (media) => {
+const playMedia = (media: Movie | Music) => {
   mediaStore.playMedia(media)
-  if (media.genre) {
+  if ('genre' in media) {
     router.push('/movies')
   } else {
     router.push('/music')
   }
 }
 
-const resumeWatching = (item) => {
+const resumeWatching = (item: ContinueWatchingItem) => {
   // Resume watching functionality
-  playMedia(item)
+  // playMedia(item)
 }
 
-const discoverNew = () => {
+const discoverNew = (): void => {
   router.push('/movies')
 }
 
-const uploadMedia = () => {
+const uploadMedia = (): void => {
   alert('Upload functionality would be implemented here')
 }
 
-const createPlaylist = () => {
+const createPlaylist = (): void => {
   router.push('/music')
 }
 
-const shareCollection = () => {
+const shareCollection = (): void => {
   alert('Share collection functionality would be implemented here')
 }
 
-const refreshRecent = () => {
+const refreshRecent = (): void => {
   // Refresh recently added content
   console.log('Refreshing recent content...')
 }
 
-const refreshRecommendations = () => {
+const refreshRecommendations = (): void => {
   // Refresh recommendations
   console.log('Refreshing recommendations...')
 }
 
-const formatTime = (timestamp) => {
+const formatTime = (timestamp: Date): string => {
   const now = new Date()
   const time = new Date(timestamp)
-  const diffInHours = (now - time) / (1000 * 60 * 60)
+  const diffInHours = (now.getTime() - time.getTime()) / (1000 * 60 * 60)
   
   if (diffInHours < 1) {
     return 'Just now'
@@ -384,11 +425,41 @@ const formatTime = (timestamp) => {
   }
 }
 
+const selectMovie = (movie: Movie) => {
+  selectedMovie.value = movie
+}
+
+const closeModal = () => {
+  selectedMovie.value = null
+}
+
+const playMovie = async (movie: Movie) => {
+  currentMovie.value = movie
+  showVideoPlayer.value = true
+  // mediaStore.playMedia(movie)
+  // await videoStore.fetchVideoUrl("ad9c5496-b81b-4f8c-954a-e353186d43e8")
+  console.log("movie",movie.id)
+  closeModal()
+}
+
+const closeVideoPlayer = () => {
+  showVideoPlayer.value = false
+  currentMovie.value = null
+}
+
+
+
 onMounted(() => {
   if (!authStore.isAuthenticated) {
     router.push('/login')
+  } else {
+    fetchMovies()
   }
 })
+
+const onVideoEnded = () => {
+  console.log('Video ended')
+}
 </script>
 
 <style scoped>

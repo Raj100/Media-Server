@@ -10,16 +10,17 @@ export interface MediaItem {
   quality?: string
   createdAt: string
   updatedAt: string
-  filePath: string
+  file_path: string
   metadata?: MediaMetadata
+  isFavorite?: boolean
 }
 
 export interface Movie extends MediaItem {
   type: "movie"
   year?: number
-  genre: string[]
+  genre:readonly string[]
   director?: string
-  cast?: string[]
+  cast?: readonly string[]
   rating?: number
   description?: string
   trailer?: string
@@ -33,7 +34,6 @@ export interface Music extends MediaItem {
   year?: number
   trackNumber?: number
   lyrics?: string
-  isFavorite?: boolean
 }
 
 export interface Video extends MediaItem {
@@ -69,4 +69,10 @@ export interface MediaFilter {
   sortBy?: "title" | "date" | "size" | "rating"
   sortOrder?: "asc" | "desc"
   search?: string
+}
+
+export interface Quality {
+  height: string;
+  bitrate: number;
+  index: number;
 }

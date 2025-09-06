@@ -2,6 +2,7 @@ import { defineStore } from "pinia"
 import { ref, computed, readonly } from "vue"
 import type { MediaItem, Movie, Music, Video, MediaLibrary, MediaFilter } from "@/types"
 import { apiClient } from "@/lib/api"
+import { showToast } from "@/lib/toast"
 
 export const useMediaStore = defineStore("media", () => {
   // State
@@ -11,6 +12,8 @@ export const useMediaStore = defineStore("media", () => {
   const isLoading = ref(false)
   const currentFilter = ref<MediaFilter>({})
   const searchQuery = ref("")
+  const favoriteMovies = ref<Movie[]>([])
+  const favoriteMusic = ref<Music[]>([])
 
   // Getters
   const totalMovies = computed(() => movies.value.length)
@@ -111,11 +114,10 @@ export const useMediaStore = defineStore("media", () => {
     try {
       await apiClient.delete(`/media/${id}`)
 
-      // Remove from appropriate array
       movies.value = movies.value.filter((item) => item.id !== id)
       music.value = music.value.filter((item) => item.id !== id)
       videos.value = videos.value.filter((item) => item.id !== id)
-
+      showToast({ message: "Delete successful", type: "success" })
       return true
     } catch (error) {
       console.error("Failed to delete media item:", error)
@@ -197,6 +199,9 @@ export const useMediaStore = defineStore("media", () => {
     return filtered
   }
 
+  const playMedia = (media: any) => {
+    console.log(media)
+    }
   return {
     // State
     movies: readonly(movies),
@@ -205,6 +210,8 @@ export const useMediaStore = defineStore("media", () => {
     isLoading: readonly(isLoading),
     currentFilter: readonly(currentFilter),
     searchQuery: readonly(searchQuery),
+    favoriteMovies: readonly(favoriteMovies),
+    favoriteMusic: readonly(favoriteMusic),
 
     // Getters
     totalMovies,
@@ -225,5 +232,6 @@ export const useMediaStore = defineStore("media", () => {
     updateFilter,
     setSearchQuery,
     clearFilters,
+    playMedia,
   }
 })

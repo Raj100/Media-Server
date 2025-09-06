@@ -6,10 +6,10 @@
         <div class="flex items-center justify-between">
           <div>
             <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Server Status</h1>
-            <p class="text-gray-600 dark:text-gray-400">Monitor your media server health and performance</p>
+            <p class="text-gray-600 dark:text-gray-400">Monitor media server health and performance</p>
           </div>
           <router-link
-            to="/"
+            to="/dashboard"
             class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
           >
             Back to Dashboard

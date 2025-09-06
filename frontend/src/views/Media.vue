@@ -12,13 +12,13 @@
           </div>
           <div class="flex gap-2">
             <router-link
-              to="/"
+              to="/dashboard"
               class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
             >
               Back to Dashboard
             </router-link>
             <button
-              @click="handleAddMedia"
+              @click="selectedAddMedia=!selectedAddMedia"
               class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
             >
               Add Media
@@ -80,7 +80,7 @@
           <div class="aspect-video bg-gray-200 dark:bg-gray-700 relative">
             <img
               v-if="item.thumbnail"
-              :src="item.thumbnail"
+              :src="`${baseUrl}${item.thumbnail}`"
               :alt="item.title"
               class="w-full h-full object-cover"
             />
@@ -178,6 +178,89 @@
         </p>
       </div>
     </div>
+
+
+
+    <div v-if="selectedAddMedia" class="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 p-8" @click="closeModal">
+      <div class="bg-white dark:bg-gray-800 rounded-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto relative" @click.stop>
+        <button
+          class="absolute top-4 right-4 w-10 h-10 rounded-full bg-black bg-opacity-50 text-white text-2xl hover:bg-opacity-80 hover:scale-110 transition"
+          @click="closeModal"
+        >
+          ×
+        </button>
+
+         <div class="flex gap-8 p-4 md:flex-col lg:p-12 lg:text-lg ">
+          <form @submit.prevent="handleAddMedia" class="space-y-6">
+      <div>
+        <label
+          class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+          >Media Type</label
+        >
+        <div class="flex items-center space-x-4">
+          <label class="flex items-center">
+            <input
+              type="radio"
+              name="file"
+              value="movie"
+              v-model="mediaType"
+              class="form-radio text-purple-600 dark:text-purple-400"
+            />
+            <span class="ml-2 text-gray-700 dark:text-gray-300">Movie</span>
+          </label>
+          <label class="flex items-center">
+            <input
+              type="radio"
+              name="file"
+              value="music"
+              v-model="mediaType"
+              class="form-radio text-purple-600 dark:text-purple-400"
+            />
+            <span class="ml-2 text-gray-700 dark:text-gray-300">Music</span>
+          </label>
+          <label class="flex items-center">
+            <input
+              type="radio"
+              name="file"
+              value="video"
+              v-model="mediaType"
+              class="form-radio text-purple-600 dark:text-purple-400"
+            />
+            <span class="ml-2 text-gray-700 dark:text-gray-300">Video</span>
+          </label>
+        </div>
+      </div>
+
+      <div>
+        <label
+          for="file-upload"
+          class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+          >Upload File</label
+        >
+        <input
+          id="file-upload"
+          type="file"
+          @change="handleFileChange"
+          class="block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 dark:text-gray-400 focus:outline-none dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 p-2"
+        />
+      </div>
+
+      <div>
+        <button
+          type="submit"
+          class="w-full py-3 px-6 bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-700 transition-colors focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2"
+        >
+          Submit Media
+        </button>
+      </div>
+    </form>
+          </div>
+
+
+      </div>
+    </div>
+
+
   </div>
 </template>
 
@@ -185,13 +268,20 @@
 import { ref, computed, onMounted, watch } from "vue"
 import { useMediaStore } from "@/stores/media"
 import type { MediaItem, Movie, Music } from "@/types"
-import axios from "axios"
+import {apiClient} from "../lib/api"
+import { useDownloadsStore } from "@/stores/downloads"
+import type { DownloadRequest, DownloadStatus, UploadRequest } from "../types"
 
+const downloadsStore = useDownloadsStore()
 const mediaStore = useMediaStore()
-
+const baseUrl = import.meta.env.VITE_API_BASE_URL;
 const searchQuery = ref("")
 const selectedType = ref<"" | "movie" | "music" | "video">("")
 const sortBy = ref<"title" | "date" | "size" | "rating">("title")
+const mediaType = ref<'movie' | 'music' | 'video' | null>(null);
+const file = ref<File | null>(null);
+let selectedAddMedia =ref<boolean>(false)
+const isSubmitting = ref(false)
 
 const filteredMedia = computed((): MediaItem[] => {
   let items: MediaItem[] = []
@@ -222,13 +312,36 @@ const formatFileSize = (bytes: number): string => {
   )
 }
 
-// Add Media
-const handleAddMedia = async () => {
-  const url = prompt("Enter media URL to download:")
-  if (!url) return
+const handleFileChange = (event: Event) => {
+  const target = event.target as HTMLInputElement;
+  if (target.files && target.files.length > 0) {
+    file.value = target.files[0];
+    console.log('File selected:', file.value.name);
+  }
+};
 
+const handleAddMedia = async (e: SubmitEvent) => {
+  // const url = prompt("Enter media URL to download:")
+  // if (!url) return
+   e.preventDefault();
   try {
+    if (!mediaType.value || !file.value) {
+    alert('Please select a media type and a file.');
+    return;
+  }
+  isSubmitting.value = true
 
+  // Create FormData to submit the file and other data
+  const formData = new FormData();
+  formData.append('type', mediaType.value);
+  formData.append('file', file.value);
+
+  await downloadsStore.addUpload(formData)
+
+  mediaType.value = null;
+  file.value = null;
+  isSubmitting.value = false;
+  closeModal();
   } catch (err) {
     console.error("Failed to add media:", err)
   }
@@ -239,12 +352,18 @@ const handleDeleteMedia = async (id: string) => {
   if (!confirm("Are you sure you want to delete this media?")) return
 
   try {
-    await axios.delete(`/media/${id}`)
     mediaStore.deleteMediaItem(id)
   } catch (err) {
     console.error("Failed to delete media:", err)
   }
 }
+
+
+
+const closeModal = () => {
+  selectedAddMedia.value = false;
+}
+
 
 // Watch for filter changes
 watch([searchQuery, selectedType, sortBy], () => {

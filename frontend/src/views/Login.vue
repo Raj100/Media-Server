@@ -4,7 +4,7 @@
       <div class="auth-card">
         <!-- Logo and Welcome -->
         <div class="auth-header">
-          <h1 class="auth-logo">MediaHub</h1>
+          <h1 class="auth-logo">Media Server</h1>
           <h2 class="auth-title">Welcome Back</h2>
           <p class="auth-subtitle">Sign in to access your media collection</p>
         </div>
@@ -191,6 +191,8 @@ import { showToast } from "@/lib/toast";
 const router = useRouter()
 const authStore = useAuthStore()
 
+// authStore.handleRedirectCallback()
+
 const showSignup = ref(false)
 
 const loginForm = ref({
@@ -247,7 +249,7 @@ const handleSignup = async () => {
 
 const handleGoogleLogin = async () => {
   const success = await authStore.loginWithGoogle()
-  if (success) {
+  if (success != null) {
     router.push('/dashboard')
   }
 }
@@ -469,7 +471,7 @@ onMounted(() => {
 .auth-divider::before {
   content: '';
   position: absolute;
-  top: 50%;
+  top: -25%;
   left: 0;
   right: 0;
   height: 1px;

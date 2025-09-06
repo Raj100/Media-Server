@@ -2,10 +2,11 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from sqlalchemy import func, or_, desc, asc
 from typing import List, Optional, Literal
-
+import shutil
 from config.database import get_db
 from models.media import MediaItem , MediaType
 from schemas.media import MediaCreate, MediaResponse, MediaLibrary
+import os
 from utils.scanner import scan_and_update_media, scan_first_level_hls_folders , update_existing_thumbnails
 
 router = APIRouter()
@@ -130,28 +131,28 @@ def get_movies(
 
     # Start with all videos in DB
     # scan_first_level_hls_folders(db, "./videos")
-    update_existing_thumbnails(db)
+
+    # update_existing_thumbnails(db)
+
     q = db.query(MediaItem).filter(MediaItem.type == MediaType.video)
 
     # Debug: print all items in DB
-    all_items = db.query(MediaItem.title, MediaItem.type).all()
-    print("All items in DB:", [(t[0], t[1].value) for t in all_items])
-    print("Full objects:", db.query(MediaItem).all())
+    # all_items = db.query(MediaItem.title, MediaItem.type).all()
+    # print("All items in DB:", [(t[0], t[1].value) for t in all_items])
+    # print("Full objects:", db.query(MediaItem).all())
 
     # Apply filters (genre, year, quality, search)
     q = apply_filters(
         q,
-        type_=MediaType.video,  # use enum consistently
+        type_=MediaType.video,  
         genre=genre,
         year=year,
         quality=quality,
         search=search
     )
 
-    # Apply sorting
     q = apply_sort(q, sort_by=sortBy, sort_order=sortOrder)
 
-    # Return the final list
     return q.all()
 @router.get("/music", response_model=List[MediaResponse])
 def get_music(
@@ -193,12 +194,22 @@ def add_media_item(payload: MediaCreate, db: Session = Depends(get_db)):
     db.refresh(item)
     return item
 
-
 @router.delete("/{media_id}", response_model=dict)
 def delete_media_item(media_id: str, db: Session = Depends(get_db)):
+    # Fetch the media item
     item = db.query(MediaItem).filter(MediaItem.id == media_id).first()
     if not item:
         raise HTTPException(status_code=404, detail="Media item not found")
+
+    folder_path = os.path.join("./videos", item.file_path)  # or dynamically choose folder by type
+    if os.path.exists(folder_path) and os.path.isdir(folder_path):
+        try:
+            shutil.rmtree(folder_path)
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Failed to delete media folder: {e}")
+
     db.delete(item)
     db.commit()
+
     return {"success": True}
+

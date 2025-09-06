@@ -4,12 +4,14 @@ import jwt
 import uuid
 import shutil
 import subprocess
-from fastapi import UploadFile, HTTPException, Query,Depends, APIRouter
+from fastapi import UploadFile, HTTPException, Query,Depends, APIRouter,BackgroundTasks, status
 from fastapi.responses import FileResponse
 import json
 from sqlalchemy.orm import Session
 from models.media import MediaItem, MediaType
 from config.database import get_db
+from utils.scanner import scan_and_update_media, scan_first_level_hls_folders , update_existing_thumbnails
+
 
 VIDEO_DIR = "./videos"
 router = APIRouter()
@@ -62,18 +64,8 @@ def get_video_info(path: str):
     bitrate = int(stream.get("bit_rate") or 0)
     return width, height, duration, bitrate
 
-@router.post("/upload_video")
-async def upload_video(file: UploadFile, db: Session = Depends(get_db)):
-    video_id = str(uuid.uuid4())
-    video_folder = os.path.join(VIDEO_DIR, video_id)
-    os.makedirs(video_folder, exist_ok=True)
-
-    # Save uploaded file temporarily
-    temp_path = os.path.join(video_folder, file.filename)
-    with open(temp_path, "wb") as buffer:
-        shutil.copyfileobj(file.file, buffer)
-
-    # --- Get video info ---
+def preprocess(db,file,temp_path,video_folder,video_id):
+   # --- Get video info ---
     src_w, src_h, duration, bitrate = get_video_info(temp_path)
     print(f"Video info - Resolution: {src_w}x{src_h}, Duration: {duration}s, Bitrate: {bitrate}bps")
 
@@ -118,10 +110,9 @@ async def upload_video(file: UploadFile, db: Session = Depends(get_db)):
 
     # Remove temp file
     os.remove(temp_path)
-
     # --- Save metadata to DB ---
     media_item = MediaItem(
-        title=file.filename,
+        title=os.path.splitext(file.filename)[0],
         type=MediaType.video,
         size=size_bytes,
         file_path=video_id,  # HLS folder
@@ -148,7 +139,7 @@ async def upload_video(file: UploadFile, db: Session = Depends(get_db)):
     db.add(media_item)
     db.commit()
     db.refresh(media_item)
-
+    update_existing_thumbnails(db);
     return {
         "video_id": video_id,
         "message": "Video uploaded, transcoded to HLS, and saved in DB",
@@ -157,6 +148,22 @@ async def upload_video(file: UploadFile, db: Session = Depends(get_db)):
         "resolution": f"{src_w}x{src_h}",
         "bitrate": bitrate
     }
+
+@router.post("/upload_video")
+async def upload_video(background_tasks: BackgroundTasks,file: UploadFile, db: Session = Depends(get_db)):
+    video_id = str(uuid.uuid4())
+    video_folder = os.path.join(VIDEO_DIR, video_id)
+    os.makedirs(video_folder, exist_ok=True)
+
+    # Save uploaded file temporarily
+    temp_path = os.path.join(video_folder, file.filename)
+    with open(temp_path, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+
+    background_tasks.add_task(preprocess, db, file, temp_path, video_folder, video_id)
+    
+    return {"status": "ok","data": "done"}
+    
 
 
 # ------------------------------

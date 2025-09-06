@@ -19,6 +19,7 @@ from config.database import SessionLocal
 from models.user import AdminUser , Nuser
 from utils.authentication.password import hash_password  
 from tasks.scheduler import start_scheduler
+from fastapi.staticfiles import StaticFiles
 
 load_dotenv()
 env = os.getenv("ENV", "dev")
@@ -80,6 +81,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.mount("/thumbnails", StaticFiles(directory="thumbnails"), name="thumbnails")
 
 app.include_router(auth_router, prefix="/auth", tags=["Authentication"])
 app.include_router(downloads_router, prefix="/download", tags=["Download"])
